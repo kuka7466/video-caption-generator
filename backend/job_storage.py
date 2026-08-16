@@ -99,6 +99,7 @@ class JobStorage:
         language: str | None = None,
         error: str | None = None,
         processing_time_ms: int | None = None,
+        transcript: dict | None = None,
     ) -> None:
         now = datetime.now(timezone.utc).isoformat()
 
@@ -131,6 +132,8 @@ class JobStorage:
                 job["error_message"] = error
             if processing_time_ms is not None:
                 job["processing_time_ms"] = processing_time_ms
+            if transcript is not None:
+                job["transcript"] = transcript
 
             job["updated_at"] = now
             self._persist()

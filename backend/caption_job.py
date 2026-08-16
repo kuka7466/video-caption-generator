@@ -289,7 +289,7 @@ def process_caption_job(
             language=language_hint,
         )
         detected_language = transcript.get("language", "en")
-        storage.update_status(job_id, language=detected_language, progress=40)
+        storage.update_status(job_id, language=detected_language, progress=40, transcript=transcript)
 
         # Phase 3: Generate Subtitles
         storage.update_status(job_id, phase="burning", progress=50)
@@ -360,3 +360,73 @@ def process_caption_job(
     except Exception as exc:  # noqa: BLE001
         logger.exception("Job %s failed: %s", job_id, exc)
         storage.update_status(job_id, status="failed", error=str(exc))
+
+
+def rerender_caption_job(
+    storage,
+    job_id: str,
+    updated_transcript: dict,
+    data_dir: str,
+) -> bool:
+    """Re-generate subtitles and re-burn video from an updated transcript."""
+    import pysubs2
+
+    job = storage.get_job(job_id)
+    if not job:
+        raise ValueError(f"Job not found: {job_id}")
+
+    video_path = job["video_path"]
+    temp_job_dir = os.path.join(data_dir, "temp", job_id)
+    ass_path = os.path.join(temp_job_dir, "subtitles.ass")
+    output_dir = os.path.join(data_dir, "output", job_id)
+    output_path = os.path.join(output_dir, "captioned.mp4")
+    out_ass_path = os.path.join(output_dir, "subtitles.ass")
+    out_srt_path = os.path.join(output_dir, "subtitles.srt")
+
+    os.makedirs(temp_job_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
+
+    width, height, duration = probe_video(video_path)
+
+    has_subtitles = generate_ass_from_transcript(
+        transcript=updated_transcript,
+        duration=duration,
+        output_path=ass_path,
+        caption_style=job.get("caption_style", "hormozi"),
+        caption_position=job.get("caption_position", 10),
+        language=job.get("language", "en"),
+        video_width=width,
+        video_height=height,
+        words_per_segment=job.get("words_per_segment", 2),
+        max_lines=job.get("max_lines", 1),
+        font_family=job.get("font_family"),
+        font_size_scale=job.get("font_size_scale", 1.0),
+        text_transform=job.get("text_transform", "uppercase"),
+        primary_color=job.get("primary_color"),
+        highlight_color=job.get("highlight_color"),
+        outline_enabled=job.get("outline_enabled", False),
+        outline_color=job.get("outline_color"),
+        outline_size=job.get("outline_size"),
+        animation_type=job.get("animation_type"),
+    )
+
+    if has_subtitles and os.path.isfile(ass_path):
+        try:
+            shutil.copyfile(ass_path, out_ass_path)
+            subs = pysubs2.load(ass_path)
+            subs.save(out_srt_path)
+        except Exception:
+            pass
+
+        success = burn_subtitles(video_path, ass_path, output_path)
+        if success:
+            storage.update_status(
+                job_id,
+                status="completed",
+                progress=100,
+                output_path=output_path,
+                transcript=updated_transcript,
+            )
+            return True
+
+    return False

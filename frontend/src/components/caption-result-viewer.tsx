@@ -1,9 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Download, Trash2, Loader2, FileText, Subtitles, Video, Sparkles, CheckCircle2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  Trash2,
+  Loader2,
+  FileText,
+  Subtitles,
+  Video,
+  Sparkles,
+  CheckCircle2,
+  Edit3,
+  RefreshCw,
+  Clock,
+  Type,
+} from "lucide-react";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +30,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
-import { deleteCaptionJob } from "~/actions/captions";
+import { deleteCaptionJob, getJobTranscript, rerenderCaptionJob } from "~/actions/captions";
 import { CAPTION_STYLE_CONFIGS } from "~/lib/caption-styles";
 import { clientEnv } from "~/lib/env";
 import { formatDuration, formatBytes, cn } from "~/lib/utils";
@@ -23,6 +38,24 @@ import type { CaptionJob } from "~/types/caption";
 
 interface CaptionResultViewerProps {
   job: CaptionJob;
+}
+
+interface TranscriptWord {
+  word: string;
+  start: number;
+  end: number;
+}
+
+interface TranscriptSegment {
+  start: number;
+  end: number;
+  text: string;
+  words: TranscriptWord[];
+}
+
+interface TranscriptData {
+  language: string;
+  segments: TranscriptSegment[];
 }
 
 function formatProcessingTime(ms: number): string {
@@ -40,23 +73,45 @@ function formatDate(dateString: string): string {
   });
 }
 
+function formatSeconds(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = (seconds % 60).toFixed(2);
+  return `${mins.toString().padStart(2, "0")}:${secs.padStart(5, "0")}`;
+}
+
 export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRerendering, setIsRerendering] = useState(false);
+  const [transcript, setTranscript] = useState<TranscriptData | null>(null);
+  const [videoTimestamp, setVideoTimestamp] = useState<number>(Date.now());
+  const [activeTab, setActiveTab] = useState<"transcript" | "export">("transcript");
 
   const styleConfig = CAPTION_STYLE_CONFIGS[job.captionStyle] || {
     name: job.captionStyle || "Custom Style",
   };
   const backendBaseUrl = clientEnv.NEXT_PUBLIC_BACKEND_URL;
-  const downloadUrl = job.backendJobId
+  const baseDownloadUrl = job.backendJobId
     ? `${backendBaseUrl}/api/download/${job.backendJobId}`
     : null;
+  const downloadUrl = baseDownloadUrl ? `${baseDownloadUrl}?v=${videoTimestamp}` : null;
   const srtDownloadUrl = job.backendJobId
-    ? `${backendBaseUrl}/api/download/${job.backendJobId}?format=srt`
+    ? `${backendBaseUrl}/api/download/${job.backendJobId}?format=srt&v=${videoTimestamp}`
     : null;
   const assDownloadUrl = job.backendJobId
-    ? `${backendBaseUrl}/api/download/${job.backendJobId}?format=ass`
+    ? `${backendBaseUrl}/api/download/${job.backendJobId}?format=ass&v=${videoTimestamp}`
     : null;
+
+  // Fetch detected transcript on mount
+  useEffect(() => {
+    if (job.backendJobId) {
+      void getJobTranscript(job.backendJobId).then((data) => {
+        if (data?.transcript) {
+          setTranscript(data.transcript);
+        }
+      });
+    }
+  }, [job.backendJobId]);
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -76,6 +131,84 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  };
+
+  const handleWordChange = (segIdx: number, wordIdx: number, newWordValue: string) => {
+    if (!transcript) return;
+    const newSegments = [...transcript.segments];
+    const targetSeg = { ...newSegments[segIdx] };
+    const targetWords = [...targetSeg.words];
+
+    targetWords[wordIdx] = {
+      ...targetWords[wordIdx],
+      word: newWordValue,
+    };
+
+    targetSeg.words = targetWords;
+    targetSeg.text = targetWords.map((w) => w.word).join(" ");
+    newSegments[segIdx] = targetSeg;
+
+    setTranscript({
+      ...transcript,
+      segments: newSegments,
+    });
+  };
+
+  const handleSegmentTextChange = (segIdx: number, newText: string) => {
+    if (!transcript) return;
+    const newSegments = [...transcript.segments];
+    const targetSeg = { ...newSegments[segIdx] };
+    targetSeg.text = newText;
+
+    // Distribute words across existing timestamp slots
+    const wordsList = newText.trim().split(/\s+/);
+    const existingWords = targetSeg.words || [];
+    const updatedWords: TranscriptWord[] = [];
+
+    const segStart = targetSeg.start;
+    const segEnd = targetSeg.end;
+    const wordDur = wordsList.length > 0 ? (segEnd - segStart) / wordsList.length : 0;
+
+    wordsList.forEach((w, i) => {
+      if (i < existingWords.length) {
+        updatedWords.push({
+          ...existingWords[i],
+          word: w,
+        });
+      } else {
+        updatedWords.push({
+          word: w,
+          start: segStart + i * wordDur,
+          end: segStart + (i + 1) * wordDur,
+        });
+      }
+    });
+
+    targetSeg.words = updatedWords;
+    newSegments[segIdx] = targetSeg;
+
+    setTranscript({
+      ...transcript,
+      segments: newSegments,
+    });
+  };
+
+  const handleSaveAndRerender = async () => {
+    if (!job.backendJobId || !transcript) return;
+    setIsRerendering(true);
+    try {
+      const res = await rerenderCaptionJob(job.backendJobId, transcript);
+      if (res.success) {
+        toast.success("Captions updated and re-burned into video successfully!");
+        setVideoTimestamp(Date.now());
+      } else {
+        toast.error(res.error || "Failed to update video captions");
+      }
+    } catch {
+      toast.error("Failed to re-render captions");
+    } finally {
+      setIsRerendering(false);
+    }
   };
 
   // Still processing state
@@ -122,7 +255,6 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20 pb-16 dark:bg-gray-950">
-      {/* Container */}
       <div className="mx-auto max-w-6xl px-6">
         {/* Navigation Bar */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -171,15 +303,16 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
 
         {/* Main 2-Column Grid */}
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-          {/* Left Column: Video Player & Prominent Download Action Cards */}
+          {/* Left Column: Video Player & Transcript Editor */}
           <div className="flex-1 space-y-6">
             {/* Video Player Box */}
             <div className="overflow-hidden rounded-2xl border border-gray-200 bg-black shadow-xl dark:border-gray-800">
               {downloadUrl ? (
                 <video
+                  key={videoTimestamp}
                   controls
                   autoPlay
-                  className="max-h-[560px] w-full object-contain"
+                  className="max-h-[520px] w-full object-contain"
                 >
                   <source src={downloadUrl} type="video/mp4" />
                   Your browser does not support the video tag.
@@ -191,59 +324,120 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
               )}
             </div>
 
-            {/* Prominent Download Hub */}
+            {/* Quick Download Buttons Row */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {downloadUrl && (
+                <button
+                  onClick={() => handleDownload(downloadUrl, `captioned_${job.originalFileName}`)}
+                  className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#459F94] to-[#367d74] px-4 py-3 text-sm font-semibold text-white shadow-md shadow-[#459F94]/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                >
+                  <Video className="h-4 w-4" />
+                  <span>Download MP4</span>
+                </button>
+              )}
+              {srtDownloadUrl && (
+                <button
+                  onClick={() => handleDownload(srtDownloadUrl, `subtitles_${job.originalFileName.replace(/\.[^/.]+$/, "")}.srt`)}
+                  className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition-all hover:border-[#459F94] hover:bg-[#459F94]/10 hover:text-[#459F94]"
+                >
+                  <FileText className="h-4 w-4 text-[#459F94]" />
+                  <span>Download (.SRT)</span>
+                </button>
+              )}
+              {assDownloadUrl && (
+                <button
+                  onClick={() => handleDownload(assDownloadUrl, `subtitles_${job.originalFileName.replace(/\.[^/.]+$/, "")}.ass`)}
+                  className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition-all hover:border-[#EDB118] hover:bg-[#EDB118]/10 hover:text-[#EDB118]"
+                >
+                  <Subtitles className="h-4 w-4 text-[#EDB118]" />
+                  <span>Styled (.ASS)</span>
+                </button>
+              )}
+            </div>
+
+            {/* Interactive Transcript & Word Editor Card */}
             <div className="rounded-2xl border border-border bg-white p-6 shadow-sm dark:bg-gray-900">
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#459F94]/10 text-[#459F94]">
-                    <CheckCircle2 className="h-5 w-5" />
+                    <Edit3 className="h-4 w-4" />
                   </div>
                   <div>
                     <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                      Captioned Video Ready for Export
+                      Detected Script &amp; Word Editor
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Full HD MP4 with burned-in animated subtitles + raw subtitle files.
+                      Click any word or line to edit mistakes, typos, or Hinglish spelling, then click Re-render.
                     </p>
                   </div>
                 </div>
+
+                <button
+                  onClick={() => void handleSaveAndRerender()}
+                  disabled={isRerendering || !transcript}
+                  className="flex cursor-pointer items-center gap-2 rounded-xl bg-[#459F94] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-[#367d74] disabled:opacity-50"
+                >
+                  <RefreshCw className={cn("h-3.5 w-3.5", isRerendering && "animate-spin")} />
+                  <span>{isRerendering ? "Re-rendering..." : "Update & Re-render Video"}</span>
+                </button>
               </div>
 
-              {/* Primary & Secondary Download Buttons Grid */}
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                {/* 1. Video Download Button */}
-                {downloadUrl && (
-                  <button
-                    onClick={() => handleDownload(downloadUrl, `captioned_${job.originalFileName}`)}
-                    className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#459F94] to-[#367d74] px-4 py-3 text-sm font-semibold text-white shadow-md shadow-[#459F94]/20 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
-                  >
-                    <Video className="h-4 w-4" />
-                    <span>Download MP4 Video</span>
-                  </button>
-                )}
+              {/* Segments List */}
+              {transcript && transcript.segments && transcript.segments.length > 0 ? (
+                <div className="space-y-4 max-h-[480px] overflow-y-auto pr-2">
+                  {transcript.segments.map((seg, segIdx) => (
+                    <div
+                      key={segIdx}
+                      className="rounded-xl border border-border/80 bg-muted/20 p-4 transition-colors hover:border-[#459F94]/40"
+                    >
+                      <div className="mb-2 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                          <Clock className="h-3 w-3 text-[#459F94]" />
+                          <span>{formatSeconds(seg.start)} &rarr; {formatSeconds(seg.end)}</span>
+                        </div>
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                          Segment #{segIdx + 1}
+                        </span>
+                      </div>
 
-                {/* 2. SRT Subtitles Button */}
-                {srtDownloadUrl && (
-                  <button
-                    onClick={() => handleDownload(srtDownloadUrl, `subtitles_${job.originalFileName.replace(/\.[^/.]+$/, "")}.srt`)}
-                    className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition-all hover:border-[#459F94] hover:bg-[#459F94]/10 hover:text-[#459F94]"
-                  >
-                    <FileText className="h-4 w-4 text-[#459F94]" />
-                    <span>Download Subtitles (.SRT)</span>
-                  </button>
-                )}
+                      {/* Full line text editable */}
+                      <input
+                        type="text"
+                        value={seg.text}
+                        onChange={(e) => handleSegmentTextChange(segIdx, e.target.value)}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-colors focus:border-[#459F94] focus:outline-none"
+                        placeholder="Edit caption line..."
+                      />
 
-                {/* 3. ASS Subtitles Button */}
-                {assDownloadUrl && (
-                  <button
-                    onClick={() => handleDownload(assDownloadUrl, `subtitles_${job.originalFileName.replace(/\.[^/.]+$/, "")}.ass`)}
-                    className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition-all hover:border-[#EDB118] hover:bg-[#EDB118]/10 hover:text-[#EDB118]"
-                  >
-                    <Subtitles className="h-4 w-4 text-[#EDB118]" />
-                    <span>Styled Subtitles (.ASS)</span>
-                  </button>
-                )}
-              </div>
+                      {/* Word Pills Editor */}
+                      {seg.words && seg.words.length > 0 && (
+                        <div className="mt-3 flex flex-wrap items-center gap-1.5 pt-2 border-t border-border/40">
+                          {seg.words.map((w, wIdx) => (
+                            <div
+                              key={wIdx}
+                              className="flex items-center gap-1 rounded-md border border-border bg-background px-2 py-0.5 text-xs shadow-2xs"
+                            >
+                              <input
+                                type="text"
+                                value={w.word}
+                                onChange={(e) => handleWordChange(segIdx, wIdx, e.target.value)}
+                                className="w-16 bg-transparent text-xs font-medium text-foreground focus:outline-none focus:text-[#459F94]"
+                              />
+                              <span className="text-[9px] text-muted-foreground">
+                                {w.start.toFixed(1)}s
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-8 text-center text-xs text-muted-foreground">
+                  Loading detected script timeline...
+                </div>
+              )}
             </div>
           </div>
 
@@ -270,8 +464,10 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
                   <dt className="text-xs text-gray-500 dark:text-gray-400">
                     Language detected
                   </dt>
-                  <dd className="mt-0.5 text-sm font-medium text-gray-900 dark:text-white">
-                    {job.language.toUpperCase()}
+                  <dd className="mt-0.5 flex items-center gap-1.5">
+                    <span className="rounded-md bg-[#459F94]/10 px-2 py-0.5 text-xs font-semibold text-[#459F94]">
+                      {job.language.toUpperCase()}
+                    </span>
                   </dd>
                 </div>
               )}

@@ -251,3 +251,38 @@ export async function clearCacheAndTempFiles(): Promise<{ freedMB: number; messa
   }
   return { freedMB: 0, message: "Cache cleared successfully." };
 }
+
+export async function getJobTranscript(backendJobId: string): Promise<{ transcript: any; language: string | null } | null> {
+  try {
+    const response = await fetch(`${env.BACKEND_URL}/api/transcript/${backendJobId}`, {
+      cache: "no-store",
+    });
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch {
+    // Backend offline or error
+  }
+  return null;
+}
+
+export async function rerenderCaptionJob(
+  backendJobId: string,
+  updatedTranscript: any
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch(`${env.BACKEND_URL}/api/rerender/${backendJobId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transcript: updatedTranscript }),
+    });
+
+    if (response.ok) {
+      return { success: true };
+    }
+    const data = await response.json().catch(() => ({}));
+    return { success: false, error: data.error || "Failed to re-render captions" };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Network error" };
+  }
+}

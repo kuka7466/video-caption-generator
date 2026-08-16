@@ -11,7 +11,7 @@ from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
-from caption_job import process_caption_job
+from caption_job import process_caption_job, rerender_caption_job
 from caption_styles import is_valid_caption_style
 from job_storage import JobStorage
 
@@ -320,6 +320,50 @@ def create_app(testing: bool = False) -> Flask:
             "freedMB": freed_mb,
             "message": f"Successfully freed {freed_mb} MB of temporary files and cache."
         }), 200
+
+
+    @app.route("/api/transcript/<job_id>", methods=["GET"])
+    def get_job_transcript(job_id: str):
+        """Retrieve the word-level transcript for a job."""
+        job = storage.get_job(job_id)
+        if not job:
+            return jsonify({"error": f"Job not found: {job_id}"}), 404
+        return jsonify({
+            "jobId": job_id,
+            "language": job.get("language"),
+            "transcript": job.get("transcript"),
+        }), 200
+
+    @app.route("/api/rerender/<job_id>", methods=["POST"])
+    def rerender_job(job_id: str):
+        """Re-render video and subtitles with an edited transcript."""
+        job = storage.get_job(job_id)
+        if not job:
+            return jsonify({"error": f"Job not found: {job_id}"}), 404
+
+        data = request.get_json() or {}
+        updated_transcript = data.get("transcript")
+        if not updated_transcript:
+            return jsonify({"error": "No transcript provided"}), 400
+
+        try:
+            success = rerender_caption_job(
+                storage=storage,
+                job_id=job_id,
+                updated_transcript=updated_transcript,
+                data_dir=data_dir,
+            )
+            if success:
+                return jsonify({
+                    "status": "completed",
+                    "jobId": job_id,
+                    "message": "Captions updated and re-rendered successfully"
+                }), 200
+            else:
+                return jsonify({"error": "Failed to re-render video subtitles"}), 500
+        except Exception as exc:
+            logger.exception("Error during caption re-rendering: %s", exc)
+            return jsonify({"error": str(exc)}), 500
 
     return app
 
