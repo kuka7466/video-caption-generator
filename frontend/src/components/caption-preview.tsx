@@ -27,9 +27,9 @@ interface CaptionPreviewProps {
 }
 
 const POSITION_PRESETS = [
-  { label: "Top", value: 45 },
-  { label: "Middle", value: 28 },
-  { label: "Bottom", value: 10 },
+  { label: "Top", value: 80 },
+  { label: "Middle", value: 48 },
+  { label: "Bottom", value: 12 },
 ] as const;
 
 const RATIO_OPTIONS: { id: AspectRatio; label: string; icon: React.ReactNode }[] = [
@@ -372,8 +372,8 @@ export function CaptionPreview({
             {/* Drag hint */}
             {!isDragging && (
               <div
-                className="absolute inset-x-0 text-center text-[9px] font-medium text-white/70 drop-shadow-md"
-                style={{ bottom: `calc(${position}% - 18px)` }}
+                className="absolute inset-x-0 text-center text-[9px] font-medium text-white/70 drop-shadow-md pointer-events-none"
+                style={{ bottom: position > 75 ? `calc(${position}% - 22px)` : position < 18 ? `calc(${position}% + 26px)` : `calc(${position}% - 18px)` }}
               >
                 Drag to reposition
               </div>

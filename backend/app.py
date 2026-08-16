@@ -93,10 +93,10 @@ def create_app(testing: bool = False) -> Flask:
 
         try:
             caption_position = int(request.form.get("captionPosition", 10))
-            if not (5 <= caption_position <= 50):
-                return jsonify({"error": "captionPosition must be between 5 and 50"}), 400
+            if not (5 <= caption_position <= 90):
+                return jsonify({"error": "captionPosition must be between 5 and 90"}), 400
         except (ValueError, TypeError):
-            return jsonify({"error": "captionPosition must be an integer between 5 and 50"}), 400
+            return jsonify({"error": "captionPosition must be an integer between 5 and 90"}), 400
 
         language_hint = request.form.get("language")
         model_size = request.form.get("modelSize", "base")

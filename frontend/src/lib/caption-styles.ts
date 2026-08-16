@@ -47,4 +47,4 @@ export const DEFAULT_CAPTION_STYLE: CaptionStyle = "hormozi";
 export const DEFAULT_CAPTION_POSITION = 10;
 
 export const CAPTION_POSITION_MIN = 5;
-export const CAPTION_POSITION_MAX = 50;
+export const CAPTION_POSITION_MAX = 88;

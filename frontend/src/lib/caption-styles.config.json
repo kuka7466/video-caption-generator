@@ -282,7 +282,7 @@
   },
   "captionPosition": {
     "min": 5,
-    "max": 50,
+    "max": 90,
     "default": 10,
     "description": "Caption position as percentage from bottom (5-50%)"
   },
