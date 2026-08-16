@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Download, Trash2, Loader2, FileText, Subtitles, Video } from "lucide-react";
+import { ArrowLeft, Download, Trash2, Loader2, FileText, Subtitles, Video, Sparkles, CheckCircle2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,12 +15,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
 import { deleteCaptionJob } from "~/actions/captions";
 import { CAPTION_STYLE_CONFIGS } from "~/lib/caption-styles";
 import { clientEnv } from "~/lib/env";
@@ -50,7 +44,9 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const styleConfig = CAPTION_STYLE_CONFIGS[job.captionStyle];
+  const styleConfig = CAPTION_STYLE_CONFIGS[job.captionStyle] || {
+    name: job.captionStyle || "Custom Style",
+  };
   const backendBaseUrl = clientEnv.NEXT_PUBLIC_BACKEND_URL;
   const downloadUrl = job.backendJobId
     ? `${backendBaseUrl}/api/download/${job.backendJobId}`
@@ -72,11 +68,11 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
     }
   };
 
-  const handleDownload = (url: string | null) => {
+  const handleDownload = (url: string | null, filename?: string) => {
     if (!url) return;
     const a = document.createElement("a");
     a.href = url;
-    a.download = "";
+    if (filename) a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -88,7 +84,7 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50 p-6 dark:bg-gray-950">
         <Loader2 className="h-8 w-8 animate-spin text-[#459F94]" />
         <p className="text-base font-medium text-gray-700 dark:text-gray-300">
-          Still processing...
+          Generating animated captions...
         </p>
         <Link
           href="/"
@@ -125,83 +121,38 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
   const dotClass = `style-dot-${job.captionStyle}`;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      {/* Top bar */}
-      <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/80">
-        <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-3">
-          {/* Back button */}
+    <div className="min-h-screen bg-gray-50 pt-20 pb-16 dark:bg-gray-950">
+      {/* Container */}
+      <div className="mx-auto max-w-6xl px-6">
+        {/* Navigation Bar */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <Link
             href="/history"
-            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-white"
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:border-[#459F94]/50 hover:text-foreground"
           >
-            <ArrowLeft className="h-4 w-4" />
-            History
+            <ArrowLeft className="h-4 w-4 text-[#459F94]" />
+            Back to History
           </Link>
 
-          {/* File name */}
-          <p
-            className="flex-1 truncate text-sm font-medium text-gray-700 dark:text-gray-300"
-            title={job.originalFileName}
-          >
-            {job.originalFileName}
-          </p>
-
-          {/* Actions */}
           <div className="flex items-center gap-2">
-            {downloadUrl && (
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#459F94] px-3.5 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#367d74]">
-                  <Download className="h-4 w-4" />
-                  Download
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
-                  <DropdownMenuItem
-                    onClick={() => handleDownload(downloadUrl)}
-                    className="flex cursor-pointer items-center gap-2"
-                  >
-                    <Video className="h-4 w-4 text-[#459F94]" />
-                    <span>Captioned Video (.mp4)</span>
-                  </DropdownMenuItem>
-                  {srtDownloadUrl && (
-                    <DropdownMenuItem
-                      onClick={() => handleDownload(srtDownloadUrl)}
-                      className="flex cursor-pointer items-center gap-2"
-                    >
-                      <FileText className="h-4 w-4 text-[#459F94]" />
-                      <span>Subtitles (.srt)</span>
-                    </DropdownMenuItem>
-                  )}
-                  {assDownloadUrl && (
-                    <DropdownMenuItem
-                      onClick={() => handleDownload(assDownloadUrl)}
-                      className="flex cursor-pointer items-center gap-2"
-                    >
-                      <Subtitles className="h-4 w-4 text-[#459F94]" />
-                      <span>Styled Subtitles (.ass)</span>
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-
             <AlertDialog>
               <AlertDialogTrigger
                 disabled={isDeleting}
-                className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-300 px-3 py-1.5 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-700 dark:hover:bg-red-950"
+                className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-500/20 disabled:opacity-50"
               >
                 {isDeleting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 )}
-                Delete
+                Delete Job
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete this caption job?</AlertDialogTitle>
                   <AlertDialogDescription>
                     This will permanently delete the job and the processed
-                    video. This action cannot be undone.
+                    video from your local storage.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -217,30 +168,87 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
             </AlertDialog>
           </div>
         </div>
-      </div>
 
-      {/* Main content */}
-      <div className="mx-auto max-w-6xl px-6 py-10">
+        {/* Main 2-Column Grid */}
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-          {/* Left: Video player */}
-          <div className="flex-1">
-            {downloadUrl ? (
-              <video
-                controls
-                className="max-h-player w-full rounded-2xl bg-black shadow-lg"
-              >
-                <source src={downloadUrl} />
-                Your browser does not support the video tag.
-              </video>
-            ) : (
-              <div className="flex aspect-video w-full items-center justify-center rounded-2xl bg-gray-900 text-sm text-gray-500">
-                Video not available
+          {/* Left Column: Video Player & Prominent Download Action Cards */}
+          <div className="flex-1 space-y-6">
+            {/* Video Player Box */}
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-black shadow-xl dark:border-gray-800">
+              {downloadUrl ? (
+                <video
+                  controls
+                  autoPlay
+                  className="max-h-[560px] w-full object-contain"
+                >
+                  <source src={downloadUrl} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <div className="flex aspect-video w-full items-center justify-center text-sm text-gray-500">
+                  Video not available
+                </div>
+              )}
+            </div>
+
+            {/* Prominent Download Hub */}
+            <div className="rounded-2xl border border-border bg-white p-6 shadow-sm dark:bg-gray-900">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#459F94]/10 text-[#459F94]">
+                    <CheckCircle2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                      Captioned Video Ready for Export
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Full HD MP4 with burned-in animated subtitles + raw subtitle files.
+                    </p>
+                  </div>
+                </div>
               </div>
-            )}
+
+              {/* Primary & Secondary Download Buttons Grid */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {/* 1. Video Download Button */}
+                {downloadUrl && (
+                  <button
+                    onClick={() => handleDownload(downloadUrl, `captioned_${job.originalFileName}`)}
+                    className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#459F94] to-[#367d74] px-4 py-3 text-sm font-semibold text-white shadow-md shadow-[#459F94]/20 transition-all hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+                  >
+                    <Video className="h-4 w-4" />
+                    <span>Download MP4 Video</span>
+                  </button>
+                )}
+
+                {/* 2. SRT Subtitles Button */}
+                {srtDownloadUrl && (
+                  <button
+                    onClick={() => handleDownload(srtDownloadUrl, `subtitles_${job.originalFileName.replace(/\.[^/.]+$/, "")}.srt`)}
+                    className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition-all hover:border-[#459F94] hover:bg-[#459F94]/10 hover:text-[#459F94]"
+                  >
+                    <FileText className="h-4 w-4 text-[#459F94]" />
+                    <span>Download Subtitles (.SRT)</span>
+                  </button>
+                )}
+
+                {/* 3. ASS Subtitles Button */}
+                {assDownloadUrl && (
+                  <button
+                    onClick={() => handleDownload(assDownloadUrl, `subtitles_${job.originalFileName.replace(/\.[^/.]+$/, "")}.ass`)}
+                    className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition-all hover:border-[#EDB118] hover:bg-[#EDB118]/10 hover:text-[#EDB118]"
+                  >
+                    <Subtitles className="h-4 w-4 text-[#EDB118]" />
+                    <span>Styled Subtitles (.ASS)</span>
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Right: Metadata sidebar */}
-          <div className="w-full rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 lg:w-72 lg:flex-shrink-0">
+          {/* Right Column: Metadata Sidebar Card */}
+          <div className="w-full rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 lg:w-80 lg:flex-shrink-0">
             <h2 className="mb-5 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
               Details
             </h2>
@@ -318,6 +326,19 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
                 </dd>
               </div>
             </dl>
+
+            {/* Quick Export in Sidebar */}
+            {downloadUrl && (
+              <div className="mt-6 border-t border-border pt-5">
+                <button
+                  onClick={() => handleDownload(downloadUrl, `captioned_${job.originalFileName}`)}
+                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#459F94] px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#367d74]"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Download Video (.MP4)</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
