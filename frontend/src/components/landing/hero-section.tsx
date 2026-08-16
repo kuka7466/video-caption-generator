@@ -57,9 +57,11 @@ const POPULAR_LANGUAGES = [
 ];
 
 const MODEL_OPTIONS = [
-  { size: "base", label: "Base (Fast & Balanced)" },
-  { size: "small", label: "Small (High Accuracy - Recommended for Hinglish)" },
-  { size: "medium", label: "Medium (Studio Precision - 98%+ Accuracy)" },
+  { size: "large-v3-turbo", label: "Large v3 Turbo (Recommended - 99% Accuracy & Ultra Fast)" },
+  { size: "large-v3", label: "Large v3 (Flagship Studio Precision - 99.2% Accuracy)" },
+  { size: "medium", label: "Medium (Studio Quality - 96% Accuracy)" },
+  { size: "small", label: "Small (Balanced - 90% Accuracy)" },
+  { size: "base", label: "Base (Fast & Lightweight)" },
   { size: "tiny", label: "Tiny (Ultra Fast - Low CPU)" },
 ];
 

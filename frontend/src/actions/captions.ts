@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "~/lib/db";
+import { revalidatePath } from "next/cache";
 import { env } from "~/lib/env";
 import type { CaptionJob, CaptionJobStatus, CaptionPhase, CaptionStyle, BackendStatusResponse } from "~/types/caption";
 
@@ -285,4 +286,9 @@ export async function rerenderCaptionJob(
   } catch (err: any) {
     return { success: false, error: err.message || "Network error" };
   }
+}
+
+export async function deleteCaptionJobs(jobIds: string[]): Promise<void> {
+  await Promise.all(jobIds.map((id) => deleteCaptionJob(id)));
+  revalidatePath("/history");
 }
