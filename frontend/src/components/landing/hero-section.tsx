@@ -134,8 +134,8 @@ export function HeroSection() {
 
   // Advanced Granular Settings
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [wordsPerSegment, setWordsPerSegment] = useState<string>("auto");
-  const [maxLines, setMaxLines] = useState<string>("2");
+  const [wordsPerSegment, setWordsPerSegment] = useState<string>("2");
+  const [maxLines, setMaxLines] = useState<string>("1");
   const [selectedFont, setSelectedFont] = useState<string>("default");
   const [fontSizeScale, setFontSizeScale] = useState<number>(1.0);
   const [textTransform, setTextTransform] = useState<string>("uppercase");
@@ -143,7 +143,7 @@ export function HeroSection() {
   const [customHighlightColor, setCustomHighlightColor] = useState<string>("");
 
   // Outline controls
-  const [outlineEnabled, setOutlineEnabled] = useState<boolean>(true);
+  const [outlineEnabled, setOutlineEnabled] = useState<boolean>(false);
   const [customOutlineColor, setCustomOutlineColor] = useState<string>("");
   const [outlineSize, setOutlineSize] = useState<string>("default");
   const [selectedAnimation, setSelectedAnimation] = useState<string>("default");
