@@ -27,7 +27,7 @@ export function CaptionStylePicker({
               type="button"
               onClick={() => onStyleChange(style)}
               className={cn(
-                "flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium",
+                "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium",
                 "border-2 transition-all duration-150",
                 "cursor-pointer",
                 selectedStyle === style
@@ -35,7 +35,7 @@ export function CaptionStylePicker({
                   : "border-border hover:border-[#459F94]/50 hover:bg-accent/50",
               )}
             >
-              <span className={cn("h-4 w-4 rounded-full ring-1 ring-black/20", dotClass)} />
+              <span className={cn("h-4 w-4 rounded-lg ring-1 ring-black/20", dotClass)} />
               {config.name}
             </button>
           );

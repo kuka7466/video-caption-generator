@@ -284,7 +284,7 @@ export function HeroSection() {
         {/* Top Hero Header: Badge, Headline, Subheadline */}
         <div className="mb-10 max-w-3xl">
           {/* Badge */}
-          <div className="animate-fade-up stagger-1 mb-5 inline-flex items-center gap-2 rounded-full border border-[#459F94]/30 bg-[#459F94]/10 px-4 py-1.5 text-sm font-medium text-[#459F94] dark:bg-[#459F94]/20">
+          <div className="animate-fade-up stagger-1 mb-5 inline-flex items-center gap-2 rounded-lg border border-[#459F94]/30 bg-[#459F94]/10 px-4 py-1.5 text-sm font-medium text-[#459F94] dark:bg-[#459F94]/20">
             <Sparkles className="h-4 w-4" />
             <span>100% Free &amp; Open Source Standalone App</span>
           </div>
@@ -310,7 +310,7 @@ export function HeroSection() {
         <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-12">
           {/* Left Column - Main Interactive Card */}
           <div className="flex-1 min-w-0">
-            <div className="animate-fade-up stagger-4 rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-xl backdrop-blur-sm sm:p-8 dark:border-gray-800 dark:bg-gray-900/80">
+            <div className="animate-fade-up stagger-4 rounded-xl border border-gray-200 bg-white/80 p-6 shadow-xl backdrop-blur-sm sm:p-8 dark:border-gray-800 dark:bg-gray-900/80">
               {/* Processing View */}
               {isProcessing && jobId && (
                 <ProcessingView
@@ -663,7 +663,7 @@ export function HeroSection() {
                   >
                     {isUploading ? (
                       <>
-                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        <span className="h-4 w-4 animate-spin rounded-lg border-2 border-white border-t-transparent" />
                         <span>Uploading...</span>
                       </>
                     ) : (
@@ -693,7 +693,7 @@ export function HeroSection() {
 
           {/* Right Column - Live Phone & Desktop Preview (Perfectly aligned with options card!) */}
           <div className="hidden shrink-0 flex-col items-center lg:flex lg:w-[460px] lg:sticky lg:top-28">
-            <div className="w-full rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-xl backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/80">
+            <div className="w-full rounded-xl border border-gray-200 bg-white/80 p-6 shadow-xl backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/80">
               <div className="mb-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                 Live Aspect Ratio &amp; Style Preview
               </div>

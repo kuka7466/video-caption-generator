@@ -268,13 +268,13 @@ export function CaptionPreview({
       >
         {/* Notch / Bar */}
         {!isLandscape && (
-          <div className="absolute top-3 left-1/2 z-10 h-5 w-20 -translate-x-1/2 rounded-full bg-black ring-1 ring-gray-800" />
+          <div className="absolute top-3 left-1/2 z-10 h-5 w-20 -translate-x-1/2 rounded-lg bg-black ring-1 ring-gray-800" />
         )}
         {isLandscape && (
           <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-gray-800">
-            <div className="h-2 w-2 rounded-full bg-red-500/80" />
-            <div className="h-2 w-2 rounded-full bg-yellow-500/80" />
-            <div className="h-2 w-2 rounded-full bg-green-500/80" />
+            <div className="h-2 w-2 rounded-lg bg-red-500/80" />
+            <div className="h-2 w-2 rounded-lg bg-yellow-500/80" />
+            <div className="h-2 w-2 rounded-lg bg-green-500/80" />
             <span className="ml-2 text-[10px] text-gray-500">Desktop Video Player (16:9)</span>
           </div>
         )}
@@ -308,8 +308,8 @@ export function CaptionPreview({
                 <div className="absolute inset-0 overflow-hidden">
                   {/* Cinematic Ambient Blurred Background Scene */}
                   <div className="absolute -inset-4 bg-gradient-to-br from-indigo-900/60 via-purple-950/80 to-slate-950 filter blur-sm scale-110" />
-                  <div className="absolute top-1/4 left-1/3 h-28 w-28 rounded-full bg-[#459F94]/30 filter blur-xl animate-pulse" />
-                  <div className="absolute bottom-1/3 right-1/4 h-32 w-32 rounded-full bg-[#EDB118]/25 filter blur-xl" />
+                  <div className="absolute top-1/4 left-1/3 h-28 w-28 rounded-lg bg-[#459F94]/30 filter blur-xl animate-pulse" />
+                  <div className="absolute bottom-1/3 right-1/4 h-32 w-32 rounded-lg bg-[#EDB118]/25 filter blur-xl" />
                   <div className="absolute inset-0 bg-radial from-transparent via-black/40 to-black/80" />
                 </div>
                 {/* Dark Vignette Overlay for Readability when no video */}
@@ -404,7 +404,7 @@ export function CaptionPreview({
 
             {/* Home indicator for mobile */}
             {!isLandscape && (
-              <div className="absolute bottom-1.5 left-1/2 h-1 w-24 -translate-x-1/2 rounded-full bg-white/40" />
+              <div className="absolute bottom-1.5 left-1/2 h-1 w-24 -translate-x-1/2 rounded-lg bg-white/40" />
             )}
           </div>
         </div>
@@ -418,7 +418,7 @@ export function CaptionPreview({
             type="button"
             onClick={() => onPositionChange(preset.value)}
             className={cn(
-              "rounded-full px-3 py-1 text-xs font-medium transition-all duration-150",
+              "rounded-lg px-3 py-1 text-xs font-medium transition-all duration-150",
               "border cursor-pointer",
               position === preset.value
                 ? "border-[#459F94] bg-[#459F94]/10 text-[#459F94]"

@@ -391,7 +391,7 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
           {/* Left Column: Video Player & Transcript Editor */}
           <div className="flex-1 space-y-6">
             {/* Video Player Box */}
-            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-black shadow-xl dark:border-gray-800">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-black shadow-xl dark:border-gray-800">
               {downloadUrl ? (
                 <video
                   id="caption-result-video"
@@ -443,7 +443,7 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
             </div>
 
             {/* Interactive Transcript & Word Editor Card */}
-            <div className="rounded-2xl border border-border bg-white p-6 shadow-sm dark:bg-gray-900">
+            <div className="rounded-xl border border-border bg-white p-6 shadow-sm dark:bg-gray-900">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#459F94]/10 text-[#459F94]">
@@ -525,7 +525,7 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
                                 type="button"
                                 onClick={() => cycleWordEmphasis(segIdx, wIdx)}
                                 title="Click to cycle keyword highlight color (Gold/Cyan/Pink/Green)"
-                                className="h-2.5 w-2.5 flex-shrink-0 cursor-pointer rounded-full bg-current opacity-70 hover:opacity-100 ring-1 ring-black/20"
+                                className="h-2.5 w-2.5 flex-shrink-0 cursor-pointer rounded-lg bg-current opacity-70 hover:opacity-100 ring-1 ring-black/20"
                               />
                               <input
                                 type="text"
@@ -557,7 +557,7 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
           </div>
 
           {/* Right Column: Metadata Sidebar Card */}
-          <div className="w-full rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 lg:w-80 lg:flex-shrink-0">
+          <div className="w-full rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 lg:w-80 lg:flex-shrink-0">
             <h2 className="mb-5 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
               Details
             </h2>
@@ -592,7 +592,7 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
                   Caption style
                 </dt>
                 <dd className="mt-0.5 flex items-center gap-1.5">
-                  <span className={cn("h-3.5 w-3.5 flex-shrink-0 rounded-full ring-1 ring-black/20", dotClass)} />
+                  <span className={cn("h-3.5 w-3.5 flex-shrink-0 rounded-lg ring-1 ring-black/20", dotClass)} />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     {styleConfig.name}
                   </span>

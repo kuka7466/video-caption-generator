@@ -133,8 +133,8 @@ export function HistoryManager({ initialJobs }: HistoryManagerProps) {
 
   if (jobs.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-gray-300 py-24 text-center dark:border-gray-800">
-        <div className="rounded-full bg-gray-100 p-4 dark:bg-gray-800">
+      <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-gray-300 py-24 text-center dark:border-gray-800">
+        <div className="rounded-lg bg-gray-100 p-4 dark:bg-gray-800">
           <Film className="h-8 w-8 text-gray-400 dark:text-gray-500" />
         </div>
         <div>
@@ -147,7 +147,7 @@ export function HistoryManager({ initialJobs }: HistoryManagerProps) {
         </div>
         <Link
           href="/"
-          className="mt-2 rounded-full bg-[#459F94] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#367d74]"
+          className="mt-2 rounded-lg bg-[#459F94] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#367d74]"
         >
           Upload a video
         </Link>
@@ -158,7 +158,7 @@ export function HistoryManager({ initialJobs }: HistoryManagerProps) {
   return (
     <div className="space-y-6">
       {/* Control Bar: Select All, Selected Count, and Batch Delete */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-white p-4 shadow-sm dark:bg-gray-900">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-white p-4 shadow-sm dark:bg-gray-900">
         <div className="flex items-center gap-3">
           <button
             onClick={toggleSelectAll}
@@ -232,7 +232,7 @@ export function HistoryManager({ initialJobs }: HistoryManagerProps) {
               key={job.id}
               onClick={() => router.push(`/captions/${job.id}`)}
               className={cn(
-                "group relative cursor-pointer overflow-hidden rounded-2xl border bg-white p-4 shadow-sm transition-all hover:shadow-xl dark:bg-gray-900",
+                "group relative cursor-pointer overflow-hidden rounded-xl border bg-white p-4 shadow-sm transition-all hover:shadow-xl dark:bg-gray-900",
                 isSelected
                   ? "border-[#459F94] ring-2 ring-[#459F94]/30"
                   : "border-border hover:border-[#459F94]/40"
@@ -298,13 +298,13 @@ export function HistoryManager({ initialJobs }: HistoryManagerProps) {
 
               {/* Style & Language Row */}
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-2.5 py-0.5 text-xs font-medium text-foreground">
-                  <span className={cn("h-2.5 w-2.5 flex-shrink-0 rounded-full ring-1 ring-black/20", dotClass)} />
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 px-2.5 py-0.5 text-xs font-medium text-foreground">
+                  <span className={cn("h-2.5 w-2.5 flex-shrink-0 rounded-lg ring-1 ring-black/20", dotClass)} />
                   {styleConfig.name}
                 </span>
 
                 {job.language && (
-                  <span className="rounded-full bg-[#459F94]/10 px-2 py-0.5 text-[10px] font-bold text-[#459F94]">
+                  <span className="rounded-lg bg-[#459F94]/10 px-2 py-0.5 text-[10px] font-bold text-[#459F94]">
                     {job.language.toUpperCase()}
                   </span>
                 )}
@@ -313,7 +313,7 @@ export function HistoryManager({ initialJobs }: HistoryManagerProps) {
               {/* Status and Date Footer */}
               <div className="flex items-center justify-between border-t border-border/50 pt-2 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1.5">
-                  <span className={cn("h-2 w-2 flex-shrink-0 rounded-full", statusIndicator.color)} />
+                  <span className={cn("h-2 w-2 flex-shrink-0 rounded-lg", statusIndicator.color)} />
                   <span>{statusIndicator.label}</span>
                 </div>
                 <span>{formatRelativeDate(job.createdAt)}</span>
