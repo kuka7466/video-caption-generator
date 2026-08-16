@@ -54,6 +54,15 @@ export async function submitCaptionJob(
     const captionStyle = formData.get("captionStyle") as string | null;
     const captionPosition = formData.get("captionPosition") as string | null;
     const durationSeconds = formData.get("durationSeconds") as string | null;
+    const language = formData.get("language") as string | null;
+    const modelSize = formData.get("modelSize") as string | null;
+    const wordsPerSegment = formData.get("wordsPerSegment") as string | null;
+    const maxLines = formData.get("maxLines") as string | null;
+    const fontFamily = formData.get("fontFamily") as string | null;
+    const fontSizeScale = formData.get("fontSizeScale") as string | null;
+    const textTransform = formData.get("textTransform") as string | null;
+    const primaryColor = formData.get("primaryColor") as string | null;
+    const highlightColor = formData.get("highlightColor") as string | null;
 
     if (!file) {
       return { error: "No file provided" };
@@ -71,6 +80,33 @@ export async function submitCaptionJob(
     backendFormData.append("captionPosition", captionPosition);
     if (durationSeconds) {
       backendFormData.append("durationSeconds", durationSeconds);
+    }
+    if (language && language !== "auto") {
+      backendFormData.append("language", language);
+    }
+    if (modelSize) {
+      backendFormData.append("modelSize", modelSize);
+    }
+    if (wordsPerSegment && wordsPerSegment !== "auto") {
+      backendFormData.append("wordsPerSegment", wordsPerSegment);
+    }
+    if (maxLines) {
+      backendFormData.append("maxLines", maxLines);
+    }
+    if (fontFamily && fontFamily !== "default") {
+      backendFormData.append("fontFamily", fontFamily);
+    }
+    if (fontSizeScale) {
+      backendFormData.append("fontSizeScale", fontSizeScale);
+    }
+    if (textTransform) {
+      backendFormData.append("textTransform", textTransform);
+    }
+    if (primaryColor) {
+      backendFormData.append("primaryColor", primaryColor);
+    }
+    if (highlightColor) {
+      backendFormData.append("highlightColor", highlightColor);
     }
 
     const response = await fetch(`${env.BACKEND_URL}/api/process`, {
@@ -94,6 +130,7 @@ export async function submitCaptionJob(
         captionPosition: parseInt(captionPosition, 10),
         status: "processing",
         backendJobId: data.jobId,
+        language: language && language !== "auto" ? language : null,
       },
     });
 
@@ -173,7 +210,7 @@ export async function deleteCaptionJob(jobId: string): Promise<void> {
         method: "DELETE",
       });
     } catch {
-      // Best-effort delete from backend; proceed to delete from DB
+      // Best-effort delete from backend
     }
   }
 

@@ -1,297 +1,271 @@
-"""Flask API application for AI Video Captions backend."""
+"""Flask Application for AI Video Caption Generation."""
 
+import logging
 import os
-import pathlib
 import shutil
-import tempfile
 import threading
-import time
 import uuid
 
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
 
+from caption_job import process_caption_job
 from caption_styles import is_valid_caption_style
 from job_storage import JobStorage
 
-# Allowed video file extensions
-ALLOWED_EXTENSIONS = {".mp4", ".mov", ".webm"}
+load_dotenv()
 
-# Caption position valid range (inclusive)
-CAPTION_POSITION_MIN = 5
-CAPTION_POSITION_MAX = 50
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
 
-
-def _extension_allowed(filename: str) -> bool:
-    """Return True if the file's extension is in ALLOWED_EXTENSIONS."""
-    return pathlib.Path(filename).suffix.lower() in ALLOWED_EXTENSIONS
+ALLOWED_EXTENSIONS = {"mp4", "mov", "webm"}
 
 
 def create_app(testing: bool = False) -> Flask:
-    """Application factory.
+    """Create and configure the Flask application."""
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    bundled_ffmpeg_dir = os.path.join(project_root, "tools", "ffmpeg", "bin")
+    if os.path.isdir(bundled_ffmpeg_dir) and bundled_ffmpeg_dir not in os.environ.get("PATH", ""):
+        os.environ["PATH"] = bundled_ffmpeg_dir + os.pathsep + os.environ.get("PATH", "")
 
-    Args:
-        testing: When True, skips background processing threads and uses an
-                 in-memory-only (no-persist) JobStorage with a temp data dir.
-    """
+    max_content_length = int(os.environ.get("MAX_CONTENT_LENGTH", 500 * 1024 * 1024))
+    data_dir = os.environ.get("DATA_DIR", os.path.join(os.path.dirname(__file__), "data"))
+    max_concurrent_jobs = int(os.environ.get("MAX_CONCURRENT_JOBS", 3))
+
     app = Flask(__name__)
-
-    # ------------------------------------------------------------------
-    # Configuration
-    # ------------------------------------------------------------------
-    max_file_size_mb = int(os.environ.get("MAX_FILE_SIZE_MB", "500"))
-    max_concurrent = int(os.environ.get("MAX_CONCURRENT_JOBS", "2"))
-    max_duration_minutes = int(os.environ.get("MAX_DURATION_MINUTES", "30"))
-    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
-
     app.config["TESTING"] = testing
-    app.config["MAX_CONTENT_LENGTH"] = max_file_size_mb * 1024 * 1024
-    app.config["MAX_FILE_SIZE_BYTES"] = max_file_size_mb * 1024 * 1024
-    app.config["MAX_CONCURRENT"] = max_concurrent
-    app.config["MAX_DURATION_MINUTES"] = max_duration_minutes
-
-    if testing:
-        data_dir = tempfile.mkdtemp()
-        storage = JobStorage(persist_path=None)
-    else:
-        data_dir = os.environ.get("DATA_DIR", str(pathlib.Path(__file__).parent / "data"))
-        persist_path = os.path.join(data_dir, "jobs.json")
-        storage = JobStorage(persist_path=persist_path)
-
-    app.config["STORAGE"] = storage
+    app.config["MAX_CONTENT_LENGTH"] = max_content_length
     app.config["DATA_DIR"] = data_dir
+    app.config["MAX_CONCURRENT_JOBS"] = max_concurrent_jobs
+    app.config["MAX_CONCURRENT"] = max_concurrent_jobs
 
-    # ------------------------------------------------------------------
-    # Output TTL cleanup
-    # ------------------------------------------------------------------
-    if not testing:
-        ttl_hours = int(os.environ.get("OUTPUT_TTL_HOURS", "24"))
-        _schedule_cleanup(app, ttl_hours)
+    CORS(app, origins="*")
 
-    # ------------------------------------------------------------------
-    # CORS
-    # ------------------------------------------------------------------
-    CORS(app, origins=[frontend_url] if frontend_url != "*" else "*")
+    os.makedirs(os.path.join(data_dir, "uploads"), exist_ok=True)
+    os.makedirs(os.path.join(data_dir, "output"), exist_ok=True)
+    os.makedirs(os.path.join(data_dir, "temp"), exist_ok=True)
 
-    # ------------------------------------------------------------------
-    # Routes
-    # ------------------------------------------------------------------
+    persist_path = None if testing else os.path.join(data_dir, "jobs.json")
+    storage = JobStorage(persist_path=persist_path)
+    app.config["STORAGE"] = storage
+    app.storage = storage  # type: ignore[attr-defined]
 
-    @app.get("/api/health")
-    def health():
-        return jsonify({"status": "ok", "version": "1.0.0"})
+    def allowed_file(filename: str) -> bool:
+        return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-    @app.post("/api/process")
-    def process():
-        storage: JobStorage = app.config["STORAGE"]
-        data_dir: str = app.config["DATA_DIR"]
-        max_file_size_bytes: int = app.config["MAX_FILE_SIZE_BYTES"]
-        _max_duration_minutes: int = app.config["MAX_DURATION_MINUTES"]
+    @app.route("/api/health", methods=["GET"])
+    def health_check():
+        return jsonify({
+            "status": "ok",
+            "version": "0.1.0",
+            "service": "ai-video-captions-backend",
+            "active_jobs": storage.active_job_count(),
+        })
 
-        # --- Enforce concurrent job limit ---
-        if storage.active_job_count() >= app.config["MAX_CONCURRENT"]:
-            return jsonify({"error": "Too many concurrent jobs. Please wait."}), 429
+    @app.route("/api/process", methods=["POST"])
+    def submit_job():
+        limit = app.config.get("MAX_CONCURRENT") or app.config.get("MAX_CONCURRENT_JOBS", 3)
+        if storage.active_job_count() >= limit:
+            return jsonify({
+                "error": f"Server busy: maximum concurrent jobs ({limit}) reached. Please try again shortly."
+            }), 429
 
-        # --- Validate file presence ---
         if "file" not in request.files:
-            return jsonify({"error": "No file provided"}), 400
+            return jsonify({"error": "No file field in request"}), 400
 
         file = request.files["file"]
-        if not file.filename:
+        if not file or not file.filename:
             return jsonify({"error": "No file selected"}), 400
 
-        # --- Validate file extension ---
-        if not _extension_allowed(file.filename):
-            ext = pathlib.Path(file.filename).suffix.lower()
-            allowed = ", ".join(sorted(ALLOWED_EXTENSIONS))
-            return jsonify({"error": f"Unsupported file type '{ext}'. Allowed: {allowed}"}), 400
-
-        # --- Validate captionStyle ---
-        caption_style = request.form.get("captionStyle", "")
-        if not is_valid_caption_style(caption_style):
-            return jsonify({"error": f"Invalid captionStyle '{caption_style}'"}), 400
-
-        # --- Validate captionPosition ---
-        caption_position_raw = request.form.get("captionPosition", "")
-        try:
-            caption_position = int(caption_position_raw)
-        except (ValueError, TypeError):
-            return jsonify({"error": "captionPosition must be an integer"}), 400
-
-        if not (CAPTION_POSITION_MIN <= caption_position <= CAPTION_POSITION_MAX):
+        if not allowed_file(file.filename):
             return jsonify({
-                "error": (
-                    f"captionPosition must be between {CAPTION_POSITION_MIN} "
-                    f"and {CAPTION_POSITION_MAX}"
-                )
+                "error": f"Unsupported file type. Allowed types: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
             }), 400
 
-        # --- Validate durationSeconds (client-provided, from HTML5 video element) ---
-        duration_seconds_str = request.form.get("durationSeconds")
-        if duration_seconds_str:
-            try:
-                duration_seconds = float(duration_seconds_str)
-                if duration_seconds > _max_duration_minutes * 60:
-                    return jsonify({"error": f"Video too long. Maximum: {_max_duration_minutes} minutes"}), 400
-            except ValueError:
-                pass  # If unparseable, let it through — backend will determine during processing
+        caption_style = request.form.get("captionStyle", "hormozi")
+        if not is_valid_caption_style(caption_style):
+            return jsonify({"error": f"Invalid caption style: {caption_style}"}), 400
 
-        # --- Read file content and check size ---
-        file_bytes = file.read()
-        file_size = len(file_bytes)
-        if file_size > max_file_size_bytes:
-            return jsonify({"error": f"File exceeds maximum size of {max_file_size_bytes // (1024*1024)} MB"}), 400
+        try:
+            caption_position = int(request.form.get("captionPosition", 10))
+            if not (5 <= caption_position <= 50):
+                return jsonify({"error": "captionPosition must be between 5 and 50"}), 400
+        except (ValueError, TypeError):
+            return jsonify({"error": "captionPosition must be an integer between 5 and 50"}), 400
 
-        # --- Save file to temp location ---
-        upload_dir = os.path.join(data_dir, "temp")
-        os.makedirs(upload_dir, exist_ok=True)
+        language_hint = request.form.get("language")
+        model_size = request.form.get("modelSize", "base")
+        
+        words_per_segment_raw = request.form.get("wordsPerSegment")
+        words_per_segment = int(words_per_segment_raw) if words_per_segment_raw and words_per_segment_raw.isdigit() else None
+        
+        max_lines_raw = request.form.get("maxLines", "2")
+        max_lines = int(max_lines_raw) if max_lines_raw in ("1", "2") else 2
 
-        file_id = str(uuid.uuid4())
-        ext = pathlib.Path(file.filename).suffix.lower()
-        saved_filename = f"{file_id}{ext}"
-        video_path = os.path.join(upload_dir, saved_filename)
+        font_family = request.form.get("fontFamily")
+        
+        try:
+            font_size_scale = float(request.form.get("fontSizeScale", "1.0"))
+        except (ValueError, TypeError):
+            font_size_scale = 1.0
 
-        with open(video_path, "wb") as fh:
-            fh.write(file_bytes)
+        text_transform = request.form.get("textTransform", "uppercase")
+        primary_color = request.form.get("primaryColor")
+        highlight_color = request.form.get("highlightColor")
 
-        # --- Create job ---
+        safe_original_name = secure_filename(file.filename) or "video.mp4"
+        upload_id = str(uuid.uuid4())
+        ext = safe_original_name.rsplit(".", 1)[-1].lower() if "." in safe_original_name else "mp4"
+        saved_filename = f"{upload_id}.{ext}"
+        video_path = os.path.join(data_dir, "uploads", saved_filename)
+
+        try:
+            file.save(video_path)
+            file_size = os.path.getsize(video_path)
+        except Exception as exc:
+            logger.exception("Failed to save uploaded file: %s", exc)
+            return jsonify({"error": "Failed to save uploaded file"}), 500
+
         job_id = storage.create_job(
             video_path=video_path,
             caption_style=caption_style,
             caption_position=caption_position,
-            original_filename=file.filename,
+            original_filename=safe_original_name,
             file_size=file_size,
+            language_hint=language_hint,
+            model_size=model_size,
+            words_per_segment=words_per_segment,
+            max_lines=max_lines,
+            font_family=font_family,
+            font_size_scale=font_size_scale,
+            text_transform=text_transform,
+            primary_color=primary_color,
+            highlight_color=highlight_color,
         )
 
-        # --- Start background processing (skipped in test mode) ---
-        if not testing:
-            _start_processing_thread(app, job_id)
+        if not app.config.get("TESTING"):
+            thread = threading.Thread(
+                target=process_caption_job,
+                kwargs={
+                    "storage": storage,
+                    "job_id": job_id,
+                    "video_path": video_path,
+                    "caption_style": caption_style,
+                    "caption_position": caption_position,
+                    "data_dir": data_dir,
+                    "language_hint": language_hint,
+                    "model_size": model_size,
+                    "words_per_segment": words_per_segment,
+                    "max_lines": max_lines,
+                    "font_family": font_family,
+                    "font_size_scale": font_size_scale,
+                    "text_transform": text_transform,
+                    "primary_color": primary_color,
+                    "highlight_color": highlight_color,
+                },
+                daemon=True,
+            )
+            thread.start()
 
         return jsonify({"jobId": job_id, "status": "pending"}), 200
 
-    @app.get("/api/status/<job_id>")
-    def status(job_id: str):
-        storage: JobStorage = app.config["STORAGE"]
+    @app.route("/api/status/<job_id>", methods=["GET"])
+    def get_status(job_id: str):
         job = storage.get_job(job_id)
-        if job is None:
-            return jsonify({"error": "Job not found"}), 404
+        if not job:
+            return jsonify({"error": f"Job not found: {job_id}"}), 404
+
         return jsonify({
-            "jobId": job["job_id"],
+            "jobId": job["id"],
             "status": job["status"],
             "progress": job["progress"],
-            "currentPhase": job["current_phase"],
-            "language": job["language"],
-            "durationSeconds": job["duration_seconds"],
-            "errorMessage": job["error_message"],
+            "currentPhase": job.get("current_phase"),
+            "language": job.get("language"),
+            "durationSeconds": job.get("duration_seconds"),
+            "errorMessage": job.get("error_message"),
             "processingTimeMs": job.get("processing_time_ms"),
-            "createdAt": job["created_at"],
-            "updatedAt": job["updated_at"],
         })
 
-    @app.get("/api/download/<job_id>")
-    def download(job_id: str):
-        storage: JobStorage = app.config["STORAGE"]
+    @app.route("/api/download/<job_id>", methods=["GET"])
+    def download_output(job_id: str):
         job = storage.get_job(job_id)
-        if job is None:
-            return jsonify({"error": "Job not found"}), 404
+        if not job:
+            return jsonify({"error": f"Job not found: {job_id}"}), 404
 
         if job["status"] != "completed":
-            return jsonify({"error": "Job not completed yet"}), 409
+            return jsonify({
+                "error": f"Job is not completed (current status: {job['status']})"
+            }), 409
 
-        data_dir: str = app.config["DATA_DIR"]
-        output_path = job.get("output_path")
-        if not output_path or not os.path.isfile(output_path):
-            # Fallback: construct from convention
-            output_path = os.path.join(data_dir, "output", job_id, "captioned.mp4")
-        if not os.path.isfile(output_path):
-            return jsonify({"error": "Output file not found"}), 404
+        fmt = request.args.get("format", "mp4").lower()
+        job_output_dir = os.path.join(data_dir, "output", job_id)
 
-        return send_file(output_path, as_attachment=True)
+        if fmt == "srt":
+            srt_path = os.path.join(job_output_dir, "subtitles.srt")
+            if not os.path.exists(srt_path):
+                return jsonify({"error": "SRT subtitle file not found"}), 404
+            base_name = os.path.splitext(job["original_filename"])[0]
+            return send_file(
+                srt_path,
+                mimetype="text/plain",
+                as_attachment=True,
+                download_name=f"{base_name}.srt",
+            )
 
-    @app.delete("/api/jobs/<job_id>")
+        if fmt == "ass":
+            ass_path = os.path.join(job_output_dir, "subtitles.ass")
+            if not os.path.exists(ass_path):
+                return jsonify({"error": "ASS subtitle file not found"}), 404
+            base_name = os.path.splitext(job["original_filename"])[0]
+            return send_file(
+                ass_path,
+                mimetype="text/plain",
+                as_attachment=True,
+                download_name=f"{base_name}.ass",
+            )
+
+        output_path = job.get("output_path") or os.path.join(job_output_dir, "captioned.mp4")
+        if not os.path.exists(output_path):
+            return jsonify({"error": "Output video file not found on disk"}), 404
+
+        download_name = f"captioned_{job['original_filename']}"
+        return send_file(
+            output_path,
+            mimetype="video/mp4",
+            as_attachment=True,
+            download_name=download_name,
+        )
+
+    @app.route("/api/jobs/<job_id>", methods=["DELETE"])
     def delete_job(job_id: str):
-        storage: JobStorage = app.config["STORAGE"]
         job = storage.get_job(job_id)
-        if job is None:
-            return jsonify({"error": "Job not found"}), 404
+        if not job:
+            return jsonify({"error": f"Job not found: {job_id}"}), 404
 
-        # Remove associated files
-        for path_key in ("video_path", "output_path"):
-            path = job.get(path_key)
-            if path and os.path.isfile(path):
-                try:
-                    os.remove(path)
-                except OSError:
-                    pass
+        output_dir = os.path.join(data_dir, "output", job_id)
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir, ignore_errors=True)
+
+        if job.get("video_path") and os.path.exists(job["video_path"]):
+            try:
+                os.remove(job["video_path"])
+            except OSError:
+                pass
 
         storage.delete_job(job_id)
-        return jsonify({"deleted": True})
+        return jsonify({"message": f"Job {job_id} deleted successfully", "deleted": True})
 
     return app
 
 
-def _cleanup_old_outputs(data_dir: str, storage: JobStorage, ttl_hours: int) -> None:
-    """Delete output directories (and their job records) older than ttl_hours."""
-    output_dir = os.path.join(data_dir, "output")
-    if not os.path.exists(output_dir):
-        return
-
-    cutoff = time.time() - (ttl_hours * 3600)
-    for job_id in os.listdir(output_dir):
-        job_path = os.path.join(output_dir, job_id)
-        if os.path.isdir(job_path):
-            mtime = os.path.getmtime(job_path)
-            if mtime < cutoff:
-                shutil.rmtree(job_path, ignore_errors=True)
-                storage.delete_job(job_id)
-
-
-def _schedule_cleanup(app: Flask, ttl_hours: int, interval_seconds: int = 3600) -> None:
-    """Run _cleanup_old_outputs immediately and then every interval_seconds in a daemon thread."""
-    def run():
-        while True:
-            with app.app_context():
-                _cleanup_old_outputs(
-                    app.config["DATA_DIR"],
-                    app.config["STORAGE"],
-                    ttl_hours,
-                )
-            time.sleep(interval_seconds)
-
-    thread = threading.Thread(target=run, daemon=True)
-    thread.start()
-
-
-def _start_processing_thread(app: Flask, job_id: str) -> None:
-    """Start a background thread to process the video job."""
-    def run():
-        with app.app_context():
-            storage: JobStorage = app.config["STORAGE"]
-            data_dir: str = app.config["DATA_DIR"]
-            job = storage.get_job(job_id)
-            if job is None:
-                return
-            try:
-                # Import here to avoid heavy deps at startup
-                from caption_job import process_caption_job
-
-                process_caption_job(
-                    storage,
-                    job_id,
-                    job["video_path"],
-                    job["caption_style"],
-                    job["caption_position"],
-                    data_dir,
-                )
-            except Exception as exc:  # noqa: BLE001
-                storage.update_status(job_id, status="failed", error=str(exc))
-
-    thread = threading.Thread(target=run, daemon=True)
-    thread.start()
-
+app = create_app()
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", "5000"))
-    debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
-    application = create_app()
-    application.run(host="0.0.0.0", port=port, debug=debug)
+    port = int(os.environ.get("PORT", 5000))
+    debug = os.environ.get("FLASK_DEBUG", "false").lower() in ("true", "1")
+    app.run(host="0.0.0.0", port=port, debug=debug)

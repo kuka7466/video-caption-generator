@@ -1,7 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Palette, Sparkles, Globe } from "lucide-react";
+import {
+  Palette,
+  Sparkles,
+  Globe,
+  Cpu,
+  Languages,
+  SlidersHorizontal,
+  ChevronDown,
+  ChevronUp,
+  Type,
+  Maximize2,
+  WrapText,
+  CaseSensitive,
+  Pipette,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { VideoDropzone } from "~/components/video-dropzone";
 import { CaptionStylePicker } from "~/components/caption-style-picker";
@@ -13,14 +27,73 @@ import {
   DEFAULT_CAPTION_STYLE,
   DEFAULT_CAPTION_POSITION,
 } from "~/lib/caption-styles";
-import type { CaptionStyle } from "~/types/caption";
+import type { CaptionStyle, AspectRatio } from "~/types/caption";
 
 type ViewState = "idle" | "uploading" | "processing" | "complete";
 
 const trustIndicators = [
-  { icon: Palette, text: "6 Styles" },
-  { icon: Sparkles, text: "Word-Level" },
+  { icon: Palette, text: "11 Creator Styles" },
+  { icon: Sparkles, text: "Word-Level Sync" },
   { icon: Globe, text: "100+ Languages" },
+  { icon: Maximize2, text: "Desktop 16:9 & Mobile 9:16" },
+];
+
+const POPULAR_LANGUAGES = [
+  { code: "auto", label: "Auto Detect" },
+  { code: "en", label: "English" },
+  { code: "es", label: "Spanish" },
+  { code: "fr", label: "French" },
+  { code: "de", label: "German" },
+  { code: "pt", label: "Portuguese" },
+  { code: "it", label: "Italian" },
+  { code: "hi", label: "Hindi" },
+  { code: "ja", label: "Japanese" },
+  { code: "zh", label: "Chinese" },
+  { code: "ko", label: "Korean" },
+  { code: "ar", label: "Arabic" },
+  { code: "ru", label: "Russian" },
+];
+
+const MODEL_OPTIONS = [
+  { size: "tiny", label: "Tiny (Fastest)" },
+  { size: "base", label: "Base (Balanced)" },
+  { size: "small", label: "Small (Higher Quality)" },
+  { size: "medium", label: "Medium (Most Accurate)" },
+];
+
+const FONT_OPTIONS = [
+  { id: "default", label: "Style Default" },
+  { id: "Montserrat", label: "Montserrat (Clean & Bold)" },
+  { id: "Bebas Neue", label: "Bebas Neue (Tall Condensed)" },
+  { id: "Impact", label: "Impact (Bold Attention)" },
+  { id: "Anton", label: "Anton (High Contrast)" },
+  { id: "Outfit", label: "Outfit (Modern Geometric)" },
+  { id: "Inter", label: "Inter (Neutral Pro)" },
+  { id: "Poppins", label: "Poppins (Rounded Sans)" },
+  { id: "Cinzel", label: "Cinzel (Cinematic Serif)" },
+  { id: "Bangers", label: "Bangers (Comic Energy)" },
+];
+
+const WORDS_PER_BLOCK_OPTIONS = [
+  { value: "auto", label: "Auto (Balanced by Style)" },
+  { value: "1", label: "1 Word (Punchy Hook / Fast-Paced)" },
+  { value: "2", label: "2-3 Words (TikTok / Reels Standard)" },
+  { value: "5", label: "4-6 Words (YouTube / Desktop Sentence)" },
+  { value: "8", label: "7-10 Words (Extended Reading)" },
+];
+
+const FONT_SIZE_OPTIONS = [
+  { value: 0.75, label: "Small (75%)" },
+  { value: 1.0, label: "Medium (100%)" },
+  { value: 1.25, label: "Large (125%)" },
+  { value: 1.5, label: "Extra Large (150%)" },
+];
+
+const TEXT_CASE_OPTIONS = [
+  { value: "uppercase", label: "UPPERCASE (ALL CAPS)" },
+  { value: "titlecase", label: "Title Case" },
+  { value: "lowercase", label: "lowercase" },
+  { value: "original", label: "Original Transcription" },
 ];
 
 export function HeroSection() {
@@ -34,6 +107,20 @@ export function HeroSection() {
   const [captionPosition, setCaptionPosition] = useState(
     DEFAULT_CAPTION_POSITION,
   );
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>("landscape");
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("auto");
+  const [selectedModel, setSelectedModel] = useState<string>("base");
+
+  // Advanced Granular Settings
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [wordsPerSegment, setWordsPerSegment] = useState<string>("auto");
+  const [maxLines, setMaxLines] = useState<string>("2");
+  const [selectedFont, setSelectedFont] = useState<string>("default");
+  const [fontSizeScale, setFontSizeScale] = useState<number>(1.0);
+  const [textTransform, setTextTransform] = useState<string>("uppercase");
+  const [customPrimaryColor, setCustomPrimaryColor] = useState<string>("");
+  const [customHighlightColor, setCustomHighlightColor] = useState<string>("");
+
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +129,21 @@ export function HeroSection() {
     setFile(selectedFile);
     setFileDuration(duration);
     setError(null);
+
+    // Auto-detect aspect ratio from video dimensions
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.src = URL.createObjectURL(selectedFile);
+    video.onloadedmetadata = () => {
+      URL.revokeObjectURL(video.src);
+      if (video.videoWidth > video.videoHeight) {
+        setAspectRatio("landscape");
+      } else if (Math.abs(video.videoWidth - video.videoHeight) < 50) {
+        setAspectRatio("square");
+      } else {
+        setAspectRatio("vertical");
+      }
+    };
   };
 
   const handleFileClear = () => {
@@ -62,8 +164,28 @@ export function HeroSection() {
     formData.append("captionStyle", selectedStyle);
     formData.append("captionPosition", String(captionPosition));
     formData.append("durationSeconds", String(fileDuration));
+    if (selectedLanguage !== "auto") {
+      formData.append("language", selectedLanguage);
+    }
+    formData.append("modelSize", selectedModel);
 
-    // Simulate upload progress while the server action runs
+    // Advanced formatting options
+    if (wordsPerSegment !== "auto") {
+      formData.append("wordsPerSegment", wordsPerSegment);
+    }
+    formData.append("maxLines", maxLines);
+    if (selectedFont !== "default") {
+      formData.append("fontFamily", selectedFont);
+    }
+    formData.append("fontSizeScale", String(fontSizeScale));
+    formData.append("textTransform", textTransform);
+    if (customPrimaryColor) {
+      formData.append("primaryColor", customPrimaryColor);
+    }
+    if (customHighlightColor) {
+      formData.append("highlightColor", customHighlightColor);
+    }
+
     const progressInterval = setInterval(() => {
       setUploadProgress((prev) => {
         if (prev === null || prev >= 90) return prev;
@@ -105,155 +227,350 @@ export function HeroSection() {
   const isProcessing = viewState === "processing";
   const styleConfig = CAPTION_STYLE_CONFIGS[selectedStyle];
 
+  const parsedWordsPerSegment = wordsPerSegment === "auto" ? 2 : parseInt(wordsPerSegment, 10);
+
   return (
-    <section
-      className="relative min-h-[85vh] overflow-hidden bg-white pt-24 dark:bg-black"
-      style={{ fontFamily: "var(--font-outfit)" }}
-    >
+    <section className="relative min-h-[85vh] overflow-hidden bg-white pt-24 dark:bg-black">
       {/* Subtle gradient background */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#459F94]/5 via-white to-white dark:from-[#459F94]/10 dark:via-black dark:to-black" />
 
       {/* Grid pattern */}
-      <div
-        className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23459F94' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }}
-      />
+      <div className="bg-grid-dots absolute inset-0 opacity-[0.03] dark:opacity-[0.05]" />
 
-      {/* Content */}
-      <div className="relative z-10 container mx-auto px-6 py-20">
-        <div className="mx-auto max-w-5xl text-center">
-          {/* Badge */}
-          <div className="animate-fade-up mb-6 inline-flex items-center gap-2 rounded-full border border-[#459F94]/30 bg-[#459F94]/10 px-4 py-1.5 text-sm font-medium text-[#459F94] dark:border-[#459F94]/40 dark:bg-[#459F94]/20">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#459F94]" />
-            Free & Open Source
-          </div>
+      <div className="container relative mx-auto px-6 py-12">
+        <div className="flex flex-col gap-12 lg:flex-row lg:items-start lg:gap-16">
+          {/* Left Column - Hero Content & Upload Form */}
+          <div className="flex-1">
+            {/* Badge */}
+            <div className="animate-fade-up stagger-1 mb-6 inline-flex items-center gap-2 rounded-full border border-[#459F94]/30 bg-[#459F94]/10 px-4 py-1.5 text-sm font-medium text-[#459F94] dark:bg-[#459F94]/20">
+              <Sparkles className="h-4 w-4" />
+              <span>100% Free &amp; Open Source Standalone App</span>
+            </div>
 
-          {/* Main Heading */}
-          <h1
-            className="animate-fade-up mb-6 text-5xl leading-tight font-bold md:text-6xl lg:text-7xl"
-            style={{ "--stagger": "0.1s" } as React.CSSProperties}
-          >
-            <span className="bg-gradient-to-r from-[#459F94] via-[#EDB118] to-[#459F94] bg-clip-text text-transparent">
-              AI Video
-            </span>
-            <br />
-            <span className="text-gray-900 dark:text-white">Captions</span>
-          </h1>
+            {/* Headline */}
+            <h1 className="animate-fade-up stagger-2 mb-6 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl dark:text-white">
+              AI-Powered{" "}
+              <span className="bg-gradient-to-r from-[#459F94] to-[#EDB118] bg-clip-text text-transparent">
+                Animated Captions
+              </span>{" "}
+              for Desktop &amp; Mobile
+            </h1>
 
-          {/* Subheading */}
-          <p
-            className="animate-fade-up mb-10 text-lg text-gray-600 md:text-xl dark:text-gray-300"
-            style={{ "--stagger": "0.2s" } as React.CSSProperties}
-          >
-            Add trending animated captions to any video. 6 styles, word-level
-            animation, multi-language support. Self-hosted and free.
-          </p>
+            {/* Subheadline */}
+            <p className="animate-fade-up stagger-3 mb-8 max-w-xl text-lg text-gray-600 sm:text-xl dark:text-gray-400">
+              Add viral word-level animated subtitles in 11 creator styles.
+              Full support for 16:9 Desktop videos, 9:16 Shorts, customizable word
+              timing, fonts, and multi-format exports.
+            </p>
 
-          {/* Trust Indicators */}
-          <div
-            className="animate-fade-up mb-10 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500 dark:text-gray-400"
-            style={{ "--stagger": "0.3s" } as React.CSSProperties}
-          >
-            {trustIndicators.map((indicator, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <indicator.icon className="h-4 w-4 text-[#459F94]" />
-                <span>{indicator.text}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Upload / Processing Area */}
-          <div
-            id="upload"
-            className="animate-fade-up mx-auto max-w-5xl"
-            style={{ "--stagger": "0.4s" } as React.CSSProperties}
-          >
-            {isProcessing && jobId ? (
-              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+            {/* Main Interactive Card */}
+            <div className="animate-fade-up stagger-4 rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-xl backdrop-blur-sm sm:p-8 dark:border-gray-800 dark:bg-gray-900/80">
+              {/* Processing View */}
+              {isProcessing && jobId && (
                 <ProcessingView
                   jobId={jobId}
                   onComplete={handleProcessingComplete}
                   onError={handleProcessingError}
                 />
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-                {/* Error message */}
-                {error && (
-                  <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-                    {error}
-                  </div>
-                )}
+              )}
 
-                {/* Two-column layout */}
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
-                  {/* Left: Dropzone + Style Picker */}
-                  <div className="flex flex-1 flex-col gap-5">
-                    <VideoDropzone
-                      file={file}
-                      onFileSelect={handleFileSelect}
-                      onFileClear={handleFileClear}
-                      uploadProgress={uploadProgress}
-                      disabled={isUploading}
-                    />
+              {/* Upload Form View */}
+              {!isProcessing && (
+                <div className="space-y-6">
+                  {/* Dropzone */}
+                  <VideoDropzone
+                    file={file}
+                    onFileSelect={handleFileSelect}
+                    onFileClear={handleFileClear}
+                    uploadProgress={uploadProgress}
+                    disabled={isUploading}
+                  />
+
+                  {/* Style Picker */}
+                  <div>
+                    <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                      Choose Caption Style (11 Creator Styles)
+                    </label>
                     <CaptionStylePicker
                       selectedStyle={selectedStyle}
                       onStyleChange={setSelectedStyle}
                     />
                   </div>
 
-                  {/* Right: Caption Preview */}
-                  <div className="flex justify-center lg:justify-end">
-                    <CaptionPreview
-                      style={styleConfig}
-                      position={captionPosition}
-                      onPositionChange={setCaptionPosition}
-                    />
-                  </div>
-                </div>
+                  {/* Primary Options row: Language & Model */}
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {/* Language Selection */}
+                    <div>
+                      <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        <Languages className="h-3.5 w-3.5 text-[#459F94]" />
+                        Language
+                      </label>
+                      <select
+                        value={selectedLanguage}
+                        onChange={(e) => setSelectedLanguage(e.target.value)}
+                        disabled={isUploading}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-[#459F94] focus:outline-none"
+                      >
+                        {POPULAR_LANGUAGES.map((lang) => (
+                          <option key={lang.code} value={lang.code}>
+                            {lang.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                {/* Generate button */}
-                <div className="mt-6">
+                    {/* Model Size Selection */}
+                    <div>
+                      <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        <Cpu className="h-3.5 w-3.5 text-[#459F94]" />
+                        Whisper Model
+                      </label>
+                      <select
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value)}
+                        disabled={isUploading}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-[#459F94] focus:outline-none"
+                      >
+                        {MODEL_OPTIONS.map((opt) => (
+                          <option key={opt.size} value={opt.size}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Collapsible Advanced Settings Accordion */}
+                  <div className="rounded-xl border border-border/70 bg-muted/20 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setShowAdvanced(!showAdvanced)}
+                      className="flex w-full cursor-pointer items-center justify-between px-4 py-3 text-left text-sm font-semibold text-foreground transition-colors hover:bg-muted/40"
+                    >
+                      <div className="flex items-center gap-2">
+                        <SlidersHorizontal className="h-4 w-4 text-[#459F94]" />
+                        <span>Advanced Caption &amp; Typography Controls</span>
+                      </div>
+                      {showAdvanced ? (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </button>
+
+                    {showAdvanced && (
+                      <div className="space-y-4 border-t border-border/70 p-4">
+                        {/* Words per subtitle block + Max lines */}
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <div>
+                            <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                              <WrapText className="h-3.5 w-3.5 text-[#459F94]" />
+                              Words Per Caption Block
+                            </label>
+                            <select
+                              value={wordsPerSegment}
+                              onChange={(e) => setWordsPerSegment(e.target.value)}
+                              disabled={isUploading}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-[#459F94] focus:outline-none"
+                            >
+                              {WORDS_PER_BLOCK_OPTIONS.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                              <WrapText className="h-3.5 w-3.5 text-[#459F94]" />
+                              Max Lines
+                            </label>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setMaxLines("1")}
+                                className={`flex-1 cursor-pointer rounded-lg border py-2 text-xs font-medium transition-colors ${
+                                  maxLines === "1"
+                                    ? "border-[#459F94] bg-[#459F94]/10 text-[#459F94]"
+                                    : "border-border text-muted-foreground hover:border-[#459F94]/50"
+                                }`}
+                              >
+                                Single Line (1)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setMaxLines("2")}
+                                className={`flex-1 cursor-pointer rounded-lg border py-2 text-xs font-medium transition-colors ${
+                                  maxLines === "2"
+                                    ? "border-[#459F94] bg-[#459F94]/10 text-[#459F94]"
+                                    : "border-border text-muted-foreground hover:border-[#459F94]/50"
+                                }`}
+                              >
+                                Two Lines (2)
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Font Family + Font Size */}
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <div>
+                            <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                              <Type className="h-3.5 w-3.5 text-[#459F94]" />
+                              Font Family
+                            </label>
+                            <select
+                              value={selectedFont}
+                              onChange={(e) => setSelectedFont(e.target.value)}
+                              disabled={isUploading}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-[#459F94] focus:outline-none"
+                            >
+                              {FONT_OPTIONS.map((opt) => (
+                                <option key={opt.id} value={opt.id}>
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                              <Type className="h-3.5 w-3.5 text-[#459F94]" />
+                              Font Size Scaling
+                            </label>
+                            <select
+                              value={fontSizeScale}
+                              onChange={(e) => setFontSizeScale(parseFloat(e.target.value))}
+                              disabled={isUploading}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-[#459F94] focus:outline-none"
+                            >
+                              {FONT_SIZE_OPTIONS.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Text Case + Custom Colors */}
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <div>
+                            <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                              <CaseSensitive className="h-3.5 w-3.5 text-[#459F94]" />
+                              Text Transform
+                            </label>
+                            <select
+                              value={textTransform}
+                              onChange={(e) => setTextTransform(e.target.value)}
+                              disabled={isUploading}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-[#459F94] focus:outline-none"
+                            >
+                              {TEXT_CASE_OPTIONS.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                              <Pipette className="h-3.5 w-3.5 text-[#459F94]" />
+                              Custom Brand Colors
+                            </label>
+                            <div className="flex items-center gap-3">
+                              <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-background px-2.5 py-1.5">
+                                <input
+                                  type="color"
+                                  value={customPrimaryColor || styleConfig.primaryColor}
+                                  onChange={(e) => setCustomPrimaryColor(e.target.value)}
+                                  className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent"
+                                />
+                                <span className="text-xs text-muted-foreground">Text</span>
+                              </div>
+                              <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-background px-2.5 py-1.5">
+                                <input
+                                  type="color"
+                                  value={customHighlightColor || styleConfig.highlightColor}
+                                  onChange={(e) => setCustomHighlightColor(e.target.value)}
+                                  className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent"
+                                />
+                                <span className="text-xs text-muted-foreground">Highlight</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Error Alert */}
+                  {error && (
+                    <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                      {error}
+                    </div>
+                  )}
+
+                  {/* Generate Button */}
                   <button
                     type="button"
                     onClick={() => void handleSubmit()}
                     disabled={!file || isUploading}
-                    className="w-full rounded-xl bg-[#459F94] py-3.5 text-base font-semibold text-white transition-colors hover:bg-[#367d74] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#459F94] to-[#367d74] px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-[#459F94]/25 transition-all hover:opacity-95 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    {isUploading ? "Uploading..." : "Generate Captions"}
+                    {isUploading ? (
+                      <>
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        <span>Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-5 w-5" />
+                        <span>Generate Captions</span>
+                      </>
+                    )}
                   </button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* Trust Indicators */}
+            <div className="animate-fade-up stagger-6 mt-8 flex flex-wrap items-center justify-center gap-6 sm:justify-start">
+              {trustIndicators.map((item) => (
+                <div
+                  key={item.text}
+                  className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
+                >
+                  <item.icon className="h-4 w-4 text-[#459F94]" />
+                  <span>{item.text}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Stats */}
-          <div
-            className="animate-fade-in mt-14 grid grid-cols-3 gap-8 border-t border-gray-200 pt-10 dark:border-gray-800"
-            style={{ "--stagger": "0.6s" } as React.CSSProperties}
-          >
-            {[
-              { value: "6", label: "Caption Styles" },
-              { value: "100+", label: "Languages Supported" },
-              { value: "0", label: "Cost - Always Free" },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="text-2xl font-bold text-[#459F94] sm:text-3xl">
-                  {stat.value}
-                </div>
-                <div className="mt-1 text-xs text-gray-600 sm:text-sm dark:text-gray-400">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
+          {/* Right Column - Live Phone & Desktop Preview */}
+          <div className="hidden shrink-0 flex-col items-center lg:flex lg:w-[440px]">
+            <div className="mb-2 text-center text-xs font-medium uppercase tracking-wider text-gray-400">
+              Live Aspect Ratio &amp; Style Preview
+            </div>
+            <CaptionPreview
+              style={styleConfig}
+              position={captionPosition}
+              onPositionChange={setCaptionPosition}
+              aspectRatio={aspectRatio}
+              onAspectRatioChange={setAspectRatio}
+              wordsPerSegment={parsedWordsPerSegment}
+              fontFamily={selectedFont}
+              fontSizeScale={fontSizeScale}
+              textTransform={textTransform}
+              primaryColorOverride={customPrimaryColor || null}
+              highlightColorOverride={customHighlightColor || null}
+            />
           </div>
         </div>
       </div>
-
-      {/* Bottom fade */}
-      <div className="absolute right-0 bottom-0 left-0 h-24 bg-gradient-to-t from-gray-50 to-transparent dark:from-gray-900" />
     </section>
   );
 }

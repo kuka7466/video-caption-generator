@@ -3,11 +3,14 @@
 import pytest
 
 
-def test_all_six_styles_loaded():
-    """All 6 caption styles should be loaded from config."""
+def test_all_eleven_styles_loaded():
+    """All 11 caption styles should be loaded from config."""
     from caption_styles import CAPTION_STYLES
 
-    expected = {"hormozi", "mrbeast", "karaoke", "minimal", "bounce", "classic"}
+    expected = {
+        "hormozi", "mrbeast", "karaoke", "minimal", "bounce", "classic",
+        "cyberpunk", "aliabdaal", "cinematic", "spotlight", "retrowave"
+    }
     assert set(CAPTION_STYLES.keys()) == expected
 
 
@@ -37,7 +40,8 @@ def test_is_valid_caption_style():
     from caption_styles import is_valid_caption_style
 
     assert is_valid_caption_style("hormozi") is True
-    assert is_valid_caption_style("mrbeast") is True
+    assert is_valid_caption_style("cyberpunk") is True
+    assert is_valid_caption_style("cinematic") is True
     assert is_valid_caption_style("nonexistent") is False
 
 

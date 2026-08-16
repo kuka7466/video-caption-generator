@@ -9,10 +9,7 @@ export default async function HistoryPage() {
   const jobs = await getCaptionJobs();
 
   return (
-    <section
-      className="min-h-screen bg-gray-50 px-6 py-24 dark:bg-gray-950"
-      style={{ fontFamily: "var(--font-outfit)" }}
-    >
+    <section className="min-h-screen bg-gray-50 px-6 py-24 dark:bg-gray-950">
       <div className="mx-auto max-w-6xl">
         {/* Page heading */}
         <div className="mb-10">

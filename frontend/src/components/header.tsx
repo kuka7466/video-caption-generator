@@ -30,7 +30,6 @@ export function Header() {
           ? "border-b border-gray-200/50 bg-white/80 shadow-md backdrop-blur-lg dark:border-gray-800/50 dark:bg-black/80"
           : "bg-white dark:bg-black"
       }`}
-      style={{ fontFamily: "var(--font-outfit)" }}
     >
       <nav className="container mx-auto flex items-center justify-between px-6 py-4">
         {/* Logo */}
@@ -61,7 +60,7 @@ export function Header() {
             History
           </Link>
           <a
-            href="https://github.com/nicolaigaina/ai-video-captions"
+            href="https://github.com/kuka7466/video-caption-generator"
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-700 transition-colors hover:text-[#459F94] dark:text-gray-300 dark:hover:text-[#459F94]"
@@ -87,7 +86,7 @@ export function Header() {
 
           {/* GitHub icon (desktop) */}
           <a
-            href="https://github.com/nicolaigaina/ai-video-captions"
+            href="https://github.com/kuka7466/video-caption-generator"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden cursor-pointer rounded-full p-2 text-gray-700 transition-colors hover:bg-gray-100 md:inline-flex dark:text-gray-300 dark:hover:bg-gray-800"
@@ -143,7 +142,7 @@ export function Header() {
               History
             </Link>
             <a
-              href="https://github.com/nicolaigaina/ai-video-captions"
+              href="https://github.com/kuka7466/video-caption-generator"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setIsMobileMenuOpen(false)}

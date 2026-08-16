@@ -106,7 +106,6 @@ export function VideoDropzone({
       if (selected) {
         void validateAndSelect(selected);
       }
-      // Reset input so re-selecting the same file works
       e.target.value = "";
     },
     [validateAndSelect],
@@ -115,7 +114,7 @@ export function VideoDropzone({
   const isUploading = uploadProgress !== null;
 
   return (
-    <div style={{ fontFamily: "var(--font-outfit)" }}>
+    <div>
       <input
         ref={inputRef}
         type="file"
@@ -177,7 +176,7 @@ export function VideoDropzone({
               </p>
               <p className="text-xs text-muted-foreground">
                 {formatBytes(file.size)}
-                {duration !== null && ` \u00B7 ${formatDuration(duration)}`}
+                {duration !== null && ` · ${formatDuration(duration)}`}
               </p>
             </div>
             <button

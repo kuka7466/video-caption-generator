@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { Film } from "lucide-react";
+import { cn, formatDuration } from "~/lib/utils";
 import { CAPTION_STYLE_CONFIGS } from "~/lib/caption-styles";
-import { formatDuration } from "~/lib/utils";
 import type { CaptionJob } from "~/types/caption";
 
 interface CaptionJobCardProps {
@@ -51,6 +51,7 @@ function formatRelativeDate(dateString: string): string {
 export function CaptionJobCard({ job }: CaptionJobCardProps) {
   const styleConfig = CAPTION_STYLE_CONFIGS[job.captionStyle];
   const statusIndicator = getStatusIndicator(job.status);
+  const dotClass = `style-dot-${job.captionStyle}`;
 
   return (
     <Link
@@ -59,10 +60,7 @@ export function CaptionJobCard({ job }: CaptionJobCardProps) {
     >
       {/* Thumbnail */}
       <div className="mb-4 overflow-hidden rounded-xl bg-gradient-to-br from-gray-800 to-gray-950">
-        <div
-          className="flex items-center justify-center"
-          style={{ aspectRatio: "16/9" }}
-        >
+        <div className="flex aspect-video items-center justify-center">
           <Film className="h-10 w-10 text-gray-600" />
         </div>
       </div>
@@ -79,12 +77,7 @@ export function CaptionJobCard({ job }: CaptionJobCardProps) {
       <div className="mb-3 flex flex-wrap items-center gap-2">
         {/* Caption style badge */}
         <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-2 py-0.5 text-xs font-medium text-foreground">
-          <span
-            className="h-3 w-3 flex-shrink-0 rounded-full ring-1 ring-black/20"
-            style={{
-              background: `linear-gradient(135deg, ${styleConfig.primaryColor} 50%, ${styleConfig.highlightColor} 50%)`,
-            }}
-          />
+          <span className={cn("h-3 w-3 flex-shrink-0 rounded-full ring-1 ring-black/20", dotClass)} />
           {styleConfig.name}
         </span>
 

@@ -125,3 +125,32 @@ def test_concurrent_job_limit(app, client):
     response = client.post("/api/process", data=form, content_type="multipart/form-data")
     assert response.status_code == 429
     assert "concurrent" in response.get_json()["error"].lower()
+
+
+def test_download_srt_and_ass_formats(app, client):
+    """Download supports format=srt and format=ass."""
+    import io
+    storage = app.config["STORAGE"]
+    data_dir = app.config["DATA_DIR"]
+    form = {"file": (io.BytesIO(b"\x00" * 100), "test.mp4"), "captionStyle": "hormozi", "captionPosition": "10"}
+    submit_response = client.post("/api/process", data=form, content_type="multipart/form-data")
+    job_id = submit_response.get_json()["jobId"]
+
+    output_dir = os.path.join(data_dir, "output", job_id)
+    os.makedirs(output_dir, exist_ok=True)
+    with open(os.path.join(output_dir, "subtitles.srt"), "w", encoding="utf-8") as f:
+        f.write("1\n00:00:00,000 --> 00:00:01,000\nHello\n")
+    with open(os.path.join(output_dir, "subtitles.ass"), "w", encoding="utf-8") as f:
+        f.write("[Script Info]\nTitle: Test\n")
+
+    storage.update_status(job_id, status="completed", progress=100)
+
+    # Test SRT download
+    srt_resp = client.get(f"/api/download/{job_id}?format=srt")
+    assert srt_resp.status_code == 200
+    assert b"Hello" in srt_resp.data
+
+    # Test ASS download
+    ass_resp = client.get(f"/api/download/{job_id}?format=ass")
+    assert ass_resp.status_code == 200
+    assert b"Script Info" in ass_resp.data

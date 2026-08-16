@@ -8,10 +8,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer
-      className="relative bg-gray-900 text-white"
-      style={{ fontFamily: "var(--font-outfit)" }}
-    >
+    <footer className="relative bg-gray-900 text-white">
       <div className="relative z-10 container mx-auto px-6 py-16">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
@@ -30,7 +27,7 @@ export function Footer() {
             </p>
             <div className="flex gap-3">
               <a
-                href="https://github.com/nicolaigaina/ai-video-captions"
+                href="https://github.com/kuka7466/video-caption-generator"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="rounded-full bg-gray-800 p-3 transition-colors hover:bg-[#459F94]"
@@ -39,7 +36,7 @@ export function Footer() {
                 <GithubIcon className="h-5 w-5" />
               </a>
               <a
-                href="mailto:admin@autoshorts.app"
+                href="https://github.com/kuka7466/video-caption-generator/issues"
                 className="rounded-full bg-gray-800 p-3 transition-colors hover:bg-[#459F94]"
                 aria-label="Email"
               >
@@ -70,7 +67,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="https://github.com/nicolaigaina/ai-video-captions#quick-start"
+                  href="https://github.com/kuka7466/video-caption-generator#quick-start"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-400 transition-colors hover:text-white"
@@ -80,7 +77,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="https://github.com/nicolaigaina/ai-video-captions/blob/main/docs/API.md"
+                  href="https://github.com/kuka7466/video-caption-generator/blob/main/docs/API.md"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-400 transition-colors hover:text-white"
@@ -97,7 +94,7 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <a
-                  href="https://github.com/nicolaigaina/ai-video-captions"
+                  href="https://github.com/kuka7466/video-caption-generator"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-400 transition-colors hover:text-white"
@@ -107,7 +104,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="https://github.com/nicolaigaina/ai-video-captions/issues"
+                  href="https://github.com/kuka7466/video-caption-generator/issues"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-400 transition-colors hover:text-white"
@@ -117,7 +114,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="https://github.com/nicolaigaina/ai-video-captions/blob/main/CONTRIBUTING.md"
+                  href="https://github.com/kuka7466/video-caption-generator/blob/main/CONTRIBUTING.md"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-400 transition-colors hover:text-white"

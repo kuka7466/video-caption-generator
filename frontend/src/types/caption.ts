@@ -1,5 +1,19 @@
-export type CaptionStyle = "hormozi" | "mrbeast" | "karaoke" | "minimal" | "bounce" | "classic";
+export type CaptionStyle =
+  | "hormozi"
+  | "mrbeast"
+  | "karaoke"
+  | "minimal"
+  | "bounce"
+  | "classic"
+  | "cyberpunk"
+  | "aliabdaal"
+  | "cinematic"
+  | "spotlight"
+  | "retrowave";
+
 export type AnimationType = "highlight" | "karaoke" | "scale" | "bounce";
+
+export type AspectRatio = "auto" | "landscape" | "vertical" | "square" | "portrait";
 
 export type CaptionJobStatus = "pending" | "uploading" | "processing" | "completed" | "failed";
 export type CaptionPhase = "uploading" | "transcribing" | "burning" | "finalizing";

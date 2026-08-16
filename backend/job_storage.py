@@ -1,38 +1,29 @@
-"""In-memory job storage with optional JSON file persistence."""
+"""Thread-safe in-memory job storage for caption processing tasks."""
 
 import json
+import logging
+import os
 import threading
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Any
 
+logger = logging.getLogger(__name__)
 
-def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+VALID_STATUSES = {"pending", "uploading", "processing", "completed", "failed"}
+VALID_PHASES = {"uploading", "transcribing", "burning", "finalizing"}
 
 
 class JobStorage:
-    """Thread-safe in-memory job store with optional JSON persistence.
+    """Thread-safe store for background caption processing jobs."""
 
-    Job data keys:
-        job_id, video_path, caption_style, caption_position,
-        original_filename, file_size, status, progress,
-        current_phase, language, duration_seconds, error_message,
-        created_at, updated_at
-    """
-
-    ACTIVE_STATUSES = {"pending", "processing"}
-
-    def __init__(self, persist_path: Optional[str] = None) -> None:
+    def __init__(self, persist_path: str | None = None) -> None:
         self._lock = threading.Lock()
-        self._jobs: dict[str, dict] = {}
+        self._jobs: dict[str, dict[str, Any]] = {}
         self._persist_path = persist_path
-        if persist_path:
-            self._load()
 
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
+        if self._persist_path and os.path.exists(self._persist_path):
+            self._load()
 
     def create_job(
         self,
@@ -41,117 +32,141 @@ class JobStorage:
         caption_position: int,
         original_filename: str,
         file_size: int,
+        language_hint: str | None = None,
+        model_size: str | None = None,
+        words_per_segment: int | None = None,
+        max_lines: int = 2,
+        font_family: str | None = None,
+        font_size_scale: float = 1.0,
+        text_transform: str = "uppercase",
+        primary_color: str | None = None,
+        highlight_color: str | None = None,
     ) -> str:
-        """Create a new job and return its UUID."""
         job_id = str(uuid.uuid4())
-        now = _now_iso()
-        job = {
+        now = datetime.now(timezone.utc).isoformat()
+
+        job: dict[str, Any] = {
+            "id": job_id,
             "job_id": job_id,
+            "status": "pending",
+            "progress": 0,
+            "current_phase": None,
             "video_path": video_path,
+            "output_path": None,
             "caption_style": caption_style,
             "caption_position": caption_position,
             "original_filename": original_filename,
             "file_size": file_size,
-            "status": "pending",
-            "progress": 0,
-            "current_phase": None,
-            "language": None,
             "duration_seconds": None,
+            "language": language_hint,
+            "model_size": model_size,
+            "words_per_segment": words_per_segment,
+            "max_lines": max_lines,
+            "font_family": font_family,
+            "font_size_scale": font_size_scale,
+            "text_transform": text_transform,
+            "primary_color": primary_color,
+            "highlight_color": highlight_color,
             "error_message": None,
-            "output_path": None,
             "processing_time_ms": None,
             "created_at": now,
             "updated_at": now,
         }
+
         with self._lock:
             self._jobs[job_id] = job
             self._persist()
+
         return job_id
 
-    def get_job(self, job_id: str) -> Optional[dict]:
-        """Return a copy of the job dict, or None if not found."""
+    def get_job(self, job_id: str) -> dict[str, Any] | None:
         with self._lock:
             job = self._jobs.get(job_id)
-            return dict(job) if job is not None else None
+            return dict(job) if job else None
 
     def update_status(
         self,
         job_id: str,
-        *,
-        status: Optional[str] = None,
-        phase: Optional[str] = None,
-        progress: Optional[int] = None,
-        language: Optional[str] = None,
-        duration: Optional[float] = None,
-        error: Optional[str] = None,
-        output_path: Optional[str] = None,
-        processing_time_ms: Optional[int] = None,
-    ) -> bool:
-        """Update job fields. Only provided (non-None) values are written.
+        status: str | None = None,
+        progress: int | None = None,
+        phase: str | None = None,
+        output_path: str | None = None,
+        duration: float | None = None,
+        language: str | None = None,
+        error: str | None = None,
+        processing_time_ms: int | None = None,
+    ) -> None:
+        now = datetime.now(timezone.utc).isoformat()
 
-        Returns True if the job was found and updated, False otherwise.
-        """
         with self._lock:
             job = self._jobs.get(job_id)
-            if job is None:
-                return False
+            if not job:
+                logger.warning("Attempted to update non-existent job: %s", job_id)
+                return
+
             if status is not None:
+                if status not in VALID_STATUSES:
+                    raise ValueError(f"Invalid status: {status}")
                 job["status"] = status
-            if phase is not None:
-                job["current_phase"] = phase
+
             if progress is not None:
-                job["progress"] = progress
-            if language is not None:
-                job["language"] = language
-            if duration is not None:
-                job["duration_seconds"] = duration
-            if error is not None:
-                job["error_message"] = error
+                job["progress"] = max(0, min(100, progress))
+
+            if phase is not None:
+                if phase not in VALID_PHASES:
+                    raise ValueError(f"Invalid phase: {phase}")
+                job["current_phase"] = phase
+
             if output_path is not None:
                 job["output_path"] = output_path
+            if duration is not None:
+                job["duration_seconds"] = duration
+            if language is not None:
+                job["language"] = language
+            if error is not None:
+                job["error_message"] = error
             if processing_time_ms is not None:
                 job["processing_time_ms"] = processing_time_ms
-            job["updated_at"] = _now_iso()
+
+            job["updated_at"] = now
             self._persist()
-        return True
 
     def delete_job(self, job_id: str) -> bool:
-        """Remove a job. Returns True if it existed, False otherwise."""
         with self._lock:
-            existed = self._jobs.pop(job_id, None) is not None
-            if existed:
+            if job_id in self._jobs:
+                del self._jobs[job_id]
                 self._persist()
-        return existed
+                return True
+            return False
 
-    def list_jobs(self) -> list[dict]:
-        """Return all jobs as copies, sorted newest-first by created_at."""
+    def list_jobs(self) -> list[dict[str, Any]]:
         with self._lock:
-            jobs = [dict(j) for j in self._jobs.values()]
-        jobs.sort(key=lambda j: j["created_at"], reverse=True)
-        return jobs
+            return [dict(j) for j in self._jobs.values()]
 
     def active_job_count(self) -> int:
-        """Count jobs whose status is 'pending' or 'processing'."""
         with self._lock:
             return sum(
-                1 for j in self._jobs.values() if j["status"] in self.ACTIVE_STATUSES
+                1 for j in self._jobs.values()
+                if j["status"] in ("pending", "processing")
             )
-
-    # ------------------------------------------------------------------
-    # Persistence helpers (must be called while holding self._lock)
-    # ------------------------------------------------------------------
 
     def _persist(self) -> None:
         if not self._persist_path:
             return
-        with open(self._persist_path, "w", encoding="utf-8") as fh:
-            json.dump(self._jobs, fh, indent=2)
+        try:
+            temp_path = self._persist_path + ".tmp"
+            with open(temp_path, "w", encoding="utf-8") as f:
+                json.dump(self._jobs, f, indent=2)
+            os.replace(temp_path, self._persist_path)
+        except Exception:
+            logger.exception("Failed to persist job storage to %s", self._persist_path)
 
     def _load(self) -> None:
+        if not self._persist_path or not os.path.exists(self._persist_path):
+            return
         try:
-            with open(self._persist_path, "r", encoding="utf-8") as fh:
-                data = json.load(fh)
-            if isinstance(data, dict):
-                self._jobs = data
-        except (FileNotFoundError, json.JSONDecodeError):
+            with open(self._persist_path, "r", encoding="utf-8") as f:
+                self._jobs = json.load(f)
+        except Exception:
+            logger.exception("Failed to load job storage from %s", self._persist_path)
             self._jobs = {}

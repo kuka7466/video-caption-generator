@@ -16,13 +16,11 @@ export function CaptionStylePicker({
   const selectedConfig = CAPTION_STYLE_CONFIGS[selectedStyle];
 
   return (
-    <div
-      className="space-y-3"
-      style={{ fontFamily: "var(--font-outfit)" }}
-    >
+    <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
         {CAPTION_STYLES.map((style) => {
           const config = CAPTION_STYLE_CONFIGS[style];
+          const dotClass = `style-dot-${style}`;
           return (
             <button
               key={style}
@@ -37,12 +35,7 @@ export function CaptionStylePicker({
                   : "border-border hover:border-[#459F94]/50 hover:bg-accent/50",
               )}
             >
-              <span
-                className="h-4 w-4 rounded-full ring-1 ring-black/20"
-                style={{
-                  background: `linear-gradient(135deg, ${config.primaryColor} 50%, ${config.highlightColor} 50%)`,
-                }}
-              />
+              <span className={cn("h-4 w-4 rounded-full ring-1 ring-black/20", dotClass)} />
               {config.name}
             </button>
           );

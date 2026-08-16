@@ -13,12 +13,12 @@ const faqs = [
   {
     question: "How long does processing take?",
     answer:
-      "It depends on video length and your hardware. Roughly 1-3 minutes per minute of video on a modern CPU. Shorter videos process in seconds.",
+      "It depends on video length and hardware. With faster-whisper on CPU or GPU, typical short videos process in seconds.",
   },
   {
     question: "What languages are supported?",
     answer:
-      "Over 100 languages are supported via automatic detection. The AI transcription identifies the spoken language and selects appropriate fonts for each script.",
+      "Over 100 languages are supported via automatic detection or manual selection. The AI transcription identifies the spoken language and selects appropriate fonts for each script.",
   },
   {
     question: "Can I customize caption position?",
@@ -26,9 +26,9 @@ const faqs = [
       "Yes! Use our interactive phone mockup to drag captions anywhere from 5% to 50% from the bottom. Preset buttons for Top, Middle, and Bottom positions.",
   },
   {
-    question: "What's the max file size?",
+    question: "Can I download SRT or ASS subtitles separately?",
     answer:
-      "Default limits are 500MB and 30 minutes, but these are configurable via environment variables when self-hosting. Adjust them to match your server's capabilities.",
+      "Yes! In addition to the captioned MP4 video, you can download the raw .srt and styled .ass subtitle files directly.",
   },
   {
     question: "How is this different from other caption tools?",
@@ -36,6 +36,8 @@ const faqs = [
       "It's fully self-hosted and open-source. Your videos stay on your infrastructure. No accounts, no uploads to third parties, no usage limits, and no vendor lock-in.",
   },
 ];
+
+const staggerClasses = ["stagger-1", "stagger-2", "stagger-3", "stagger-4", "stagger-5", "stagger-6"];
 
 export function FAQSection() {
   const { ref, isInView } = useIntersectionObserver({ margin: "-100px" });
@@ -46,7 +48,6 @@ export function FAQSection() {
       id="faq"
       ref={ref}
       className="relative bg-gray-50 py-20 dark:bg-gray-900"
-      style={{ fontFamily: "var(--font-outfit)" }}
     >
       <div className="relative z-10 container mx-auto px-6">
         {/* Header */}
@@ -71,10 +72,7 @@ export function FAQSection() {
               key={index}
               className={`reveal rounded-2xl bg-white p-6 shadow-sm transition-all dark:bg-gray-800 ${
                 index >= 4 ? "md:col-span-2" : ""
-              } ${isInView ? "in-view" : ""}`}
-              style={
-                { "--stagger": `${index * 0.1}s` } as React.CSSProperties
-              }
+              } ${staggerClasses[index % 6]} ${isInView ? "in-view" : ""}`}
             >
               <button
                 onClick={() =>

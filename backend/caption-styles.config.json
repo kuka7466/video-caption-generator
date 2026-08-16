@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Caption Styles Configuration",
-  "description": "Shared configuration for caption styles used by both frontend preview and backend video rendering. WARNING: This file is duplicated in backend/caption-styles.config.json for Modal deployment. Keep both files in sync when making changes!",
+  "description": "Shared configuration for caption styles used by both frontend preview and backend video rendering.",
   "styles": {
     "hormozi": {
       "id": "hormozi",
@@ -22,7 +22,7 @@
       "letterSpacing": 0,
       "wordSpacing": 100,
       "animationType": "highlight",
-      "previewText": "MOVE ME UP OR DOWN",
+      "previewText": "VIRAL CAPTIONS",
       "bestFor": "Business & motivation"
     },
     "mrbeast": {
@@ -44,7 +44,7 @@
       "letterSpacing": 0,
       "wordSpacing": 100,
       "animationType": "highlight",
-      "previewText": "MOVE ME UP OR DOWN",
+      "previewText": "VIRAL CAPTIONS",
       "bestFor": "Gaming & entertainment"
     },
     "karaoke": {
@@ -66,13 +66,13 @@
       "letterSpacing": 0,
       "wordSpacing": 100,
       "animationType": "karaoke",
-      "previewText": "MOVE ME UP OR DOWN",
+      "previewText": "VIRAL CAPTIONS",
       "bestFor": "Music & sing-alongs"
     },
     "minimal": {
       "id": "minimal",
       "name": "Minimal",
-      "description": "Subtle scaling effect with near-white highlights",
+      "description": "Subtle scaling effect with clean highlights",
       "fontName": "Bebas Neue",
       "fontNameFallback": "IBM Plex Sans",
       "fontSize": 120,
@@ -88,13 +88,13 @@
       "letterSpacing": 3.0,
       "wordSpacing": 110,
       "animationType": "scale",
-      "previewText": "MOVE ME UP OR DOWN",
+      "previewText": "VIRAL CAPTIONS",
       "bestFor": "Professional & clean"
     },
     "bounce": {
       "id": "bounce",
       "name": "Bounce",
-      "description": "Playful bounce animation with bright colors",
+      "description": "Playful bounce animation with bright neon colors",
       "fontName": "Bangers",
       "fontNameFallback": "IBM Plex Sans",
       "fontSize": 110,
@@ -110,7 +110,7 @@
       "letterSpacing": 0,
       "wordSpacing": 100,
       "animationType": "bounce",
-      "previewText": "MOVE ME UP OR DOWN",
+      "previewText": "VIRAL CAPTIONS",
       "bestFor": "Fun & energetic"
     },
     "classic": {
@@ -132,34 +132,152 @@
       "letterSpacing": 0,
       "wordSpacing": 100,
       "animationType": "highlight",
-      "previewText": "MOVE ME UP OR DOWN",
+      "previewText": "VIRAL CAPTIONS",
       "bestFor": "Viral & attention-grabbing"
+    },
+    "cyberpunk": {
+      "id": "cyberpunk",
+      "name": "Cyberpunk",
+      "description": "Electric neon cyan and hot pink glow",
+      "fontName": "Montserrat",
+      "fontNameFallback": "IBM Plex Sans",
+      "fontSize": 110,
+      "primaryColor": "#00F0FF",
+      "highlightColor": "#FF007F",
+      "outlineColor": "#0D0221",
+      "shadowColor": "#FF007F",
+      "shadowAlpha": 80,
+      "outlineSize": 6.0,
+      "shadowDepth": 6.0,
+      "bold": true,
+      "italic": false,
+      "letterSpacing": 1.5,
+      "wordSpacing": 105,
+      "animationType": "highlight",
+      "previewText": "VIRAL CAPTIONS",
+      "bestFor": "Tech, gaming & futuristic vibes"
+    },
+    "aliabdaal": {
+      "id": "aliabdaal",
+      "name": "Clean Pastel",
+      "description": "Minimalist pastel highlighter aesthetic",
+      "fontName": "Outfit",
+      "fontNameFallback": "IBM Plex Sans",
+      "fontSize": 100,
+      "primaryColor": "#FFFFFF",
+      "highlightColor": "#FFE66D",
+      "outlineColor": "#1A1A1A",
+      "shadowColor": "#000000",
+      "shadowAlpha": 150,
+      "outlineSize": 4.0,
+      "shadowDepth": 3.0,
+      "bold": true,
+      "italic": false,
+      "letterSpacing": 0.5,
+      "wordSpacing": 100,
+      "animationType": "highlight",
+      "previewText": "VIRAL CAPTIONS",
+      "bestFor": "Podcasts, education & productivity"
+    },
+    "cinematic": {
+      "id": "cinematic",
+      "name": "Cinematic",
+      "description": "Elegant letterbox style with warm gold highlight",
+      "fontName": "Cinzel",
+      "fontNameFallback": "IBM Plex Sans",
+      "fontSize": 95,
+      "primaryColor": "#E6E6E6",
+      "highlightColor": "#F5C518",
+      "outlineColor": "#000000",
+      "shadowColor": "#000000",
+      "shadowAlpha": 60,
+      "outlineSize": 3.5,
+      "shadowDepth": 4.0,
+      "bold": true,
+      "italic": false,
+      "letterSpacing": 3.0,
+      "wordSpacing": 115,
+      "animationType": "highlight",
+      "previewText": "VIRAL CAPTIONS",
+      "bestFor": "Documentaries & cinematic reels"
+    },
+    "spotlight": {
+      "id": "spotlight",
+      "name": "Spotlight",
+      "description": "High-impact zoom scale with vibrant punch",
+      "fontName": "Impact",
+      "fontNameFallback": "IBM Plex Sans",
+      "fontSize": 115,
+      "primaryColor": "#FFFFFF",
+      "highlightColor": "#FFDF00",
+      "outlineColor": "#000000",
+      "shadowColor": "#000000",
+      "shadowAlpha": 0,
+      "outlineSize": 7.0,
+      "shadowDepth": 5.0,
+      "bold": true,
+      "italic": false,
+      "letterSpacing": 1.0,
+      "wordSpacing": 100,
+      "animationType": "scale",
+      "previewText": "VIRAL CAPTIONS",
+      "bestFor": "High energy & short hooks"
+    },
+    "retrowave": {
+      "id": "retrowave",
+      "name": "Retro Wave",
+      "description": "80s synthwave neon orange and magenta vibes",
+      "fontName": "Bangers",
+      "fontNameFallback": "IBM Plex Sans",
+      "fontSize": 110,
+      "primaryColor": "#FF8000",
+      "highlightColor": "#E000FF",
+      "outlineColor": "#2B0938",
+      "shadowColor": "#00F0FF",
+      "shadowAlpha": 50,
+      "outlineSize": 6.0,
+      "shadowDepth": 6.5,
+      "bold": true,
+      "italic": false,
+      "letterSpacing": 2.0,
+      "wordSpacing": 100,
+      "animationType": "bounce",
+      "previewText": "VIRAL CAPTIONS",
+      "bestFor": "Creative & retro content"
     }
   },
   "outputFormats": {
     "vertical": {
       "id": "vertical",
-      "name": "Vertical",
+      "name": "Vertical (9:16)",
       "width": 1080,
       "height": 1920,
       "aspectRatio": "9:16",
       "description": "TikTok, Shorts, Reels"
     },
+    "landscape": {
+      "id": "landscape",
+      "name": "Landscape (16:9)",
+      "width": 1920,
+      "height": 1080,
+      "aspectRatio": "16:9",
+      "description": "YouTube, Desktop"
+    },
     "square": {
       "id": "square",
-      "name": "Square",
+      "name": "Square (1:1)",
       "width": 1080,
       "height": 1080,
       "aspectRatio": "1:1",
       "description": "Instagram Feed"
     },
-    "landscape": {
-      "id": "landscape",
-      "name": "Landscape",
-      "width": 1920,
-      "height": 1080,
-      "aspectRatio": "16:9",
-      "description": "YouTube, Twitter"
+    "portrait": {
+      "id": "portrait",
+      "name": "Portrait (4:5)",
+      "width": 1080,
+      "height": 1350,
+      "aspectRatio": "4:5",
+      "description": "Social Media Feed"
     }
   },
   "captionPosition": {
@@ -170,6 +288,6 @@
   },
   "preview": {
     "phoneWidth": 180,
-    "description": "iPhone mockup width in pixels for preview scaling calculation"
+    "description": "Mockup width in pixels for preview scaling calculation"
   }
 }

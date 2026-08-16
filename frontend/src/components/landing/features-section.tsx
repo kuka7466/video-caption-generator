@@ -32,15 +32,17 @@ const features = [
     icon: Shield,
     title: "Self-Hosted & Private",
     description:
-      "Run on your own infrastructure with Docker. No accounts, no tracking, no data collection.",
+      "Run on your own infrastructure. No accounts, no tracking, no data collection.",
   },
   {
     icon: Download,
-    title: "HD Export",
+    title: "Multi-Format Export",
     description:
-      "Download your captioned video in full quality. CRF 18 encoding, audio preserved.",
+      "Download captioned video in full HD (CRF 18) or export standalone .srt and .ass subtitles.",
   },
 ];
+
+const staggerClasses = ["stagger-1", "stagger-2", "stagger-3", "stagger-4", "stagger-5", "stagger-6"];
 
 export function FeaturesSection() {
   const { ref, isInView } = useIntersectionObserver({ margin: "-100px" });
@@ -50,7 +52,6 @@ export function FeaturesSection() {
       id="features"
       ref={ref}
       className="relative bg-gray-50 py-20 dark:bg-gray-900"
-      style={{ fontFamily: "var(--font-outfit)" }}
     >
       <div className="container mx-auto px-6">
         <div className={`reveal ${isInView ? "in-view" : ""}`}>
@@ -70,10 +71,7 @@ export function FeaturesSection() {
           {features.map((feature, index) => (
             <div
               key={feature.title}
-              className={`reveal group rounded-2xl bg-white p-6 shadow-sm transition-all hover:shadow-lg dark:bg-gray-800 ${isInView ? "in-view" : ""}`}
-              style={
-                { "--stagger": `${index * 0.1}s` } as React.CSSProperties
-              }
+              className={`reveal group rounded-2xl bg-white p-6 shadow-sm transition-all hover:shadow-lg dark:bg-gray-800 ${staggerClasses[index % 6]} ${isInView ? "in-view" : ""}`}
             >
               <div className="mb-4 inline-flex rounded-xl bg-[#459F94]/10 p-3 text-[#459F94] transition-colors group-hover:bg-[#459F94] group-hover:text-white">
                 <feature.icon className="h-6 w-6" />
@@ -90,12 +88,7 @@ export function FeaturesSection() {
       </div>
 
       {/* Background Pattern */}
-      <div
-        className="absolute inset-0 -z-10 opacity-5"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23459F94' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }}
-      />
+      <div className="bg-grid-dots absolute inset-0 -z-10 opacity-5" />
     </section>
   );
 }

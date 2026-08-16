@@ -9,34 +9,42 @@ env/
 *.egg-info/
 dist/
 build/
+.pytest_cache/
 
-# Node
+# Node & Next.js
 node_modules/
 .next/
 out/
+next-env.d.ts
+package-lock.json
 
-# IDE
+# IDE & OS
 .vscode/
 .idea/
 *.swp
 *.swo
+.DS_Store
+Thumbs.db
 
-# Environment
+# Environment Variables & Secrets
 .env
 .env.local
 .env.*.local
+*.pem
+*.key
 
-# Data
+# Data & SQLite Databases
 backend/data/
 frontend/data/
 frontend/prisma/data/
 *.db
 *.db-journal
+*.sqlite
+*.sqlite3
 
-# OS
-.DS_Store
-Thumbs.db
+# Large Executable Binaries
+tools/ffmpeg/bin/*.exe
+tools/ffmpeg/bin/*.dll
 
 # Docker
 docker-compose.override.yml
-package-lock.json

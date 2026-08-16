@@ -25,9 +25,9 @@ const steps = [
     number: "3",
     title: "Download",
     description:
-      "Your captioned video is ready. Download in full HD quality.",
+      "Your captioned video and subtitles are ready. Download in full HD quality or export .srt / .ass.",
     icon: Download,
-    pills: ["HD quality", "CRF 18", "Audio preserved"],
+    pills: ["HD quality", "CRF 18", "SRT & ASS export"],
   },
 ];
 
@@ -39,6 +39,8 @@ const pipelineSteps = [
   { icon: Download, label: "Export" },
 ];
 
+const staggerClasses = ["stagger-1", "stagger-2", "stagger-3", "stagger-4", "stagger-5"];
+
 export function HowItWorksSection() {
   const { ref, isInView } = useIntersectionObserver({ margin: "-80px" });
 
@@ -47,7 +49,6 @@ export function HowItWorksSection() {
       id="how-it-works"
       ref={ref}
       className="relative bg-white py-24 dark:bg-black"
-      style={{ fontFamily: "var(--font-outfit)" }}
     >
       <div className="container mx-auto px-6">
         {/* Section heading */}
@@ -64,21 +65,11 @@ export function HowItWorksSection() {
         </div>
 
         {/* Pipeline visualization */}
-        <div
-          className={`reveal mx-auto mb-20 max-w-3xl rounded-2xl bg-gray-900 p-6 shadow-lg sm:p-8 dark:bg-gray-800 ${isInView ? "in-view" : ""}`}
-          style={{ "--stagger": "0.2s" } as React.CSSProperties}
-        >
+        <div className={`reveal stagger-2 mx-auto mb-20 max-w-3xl rounded-2xl bg-gray-900 p-6 shadow-lg sm:p-8 dark:bg-gray-800 ${isInView ? "in-view" : ""}`}>
           <div className="flex items-center justify-between gap-1 sm:gap-2">
             {pipelineSteps.map((step, i) => (
               <Fragment key={step.label}>
-                <div
-                  className={`reveal-scale flex flex-col items-center gap-2 ${isInView ? "in-view" : ""}`}
-                  style={
-                    {
-                      "--stagger": `${0.3 + i * 0.15}s`,
-                    } as React.CSSProperties
-                  }
-                >
+                <div className={`reveal-scale ${staggerClasses[i % 5]} flex flex-col items-center gap-2 ${isInView ? "in-view" : ""}`}>
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-[#459F94] to-[#EDB118] shadow-lg shadow-[#459F94]/20 sm:h-12 sm:w-12">
                     <step.icon className="h-4 w-4 text-white sm:h-5 sm:w-5" />
                   </div>
@@ -90,7 +81,6 @@ export function HowItWorksSection() {
                 {i < pipelineSteps.length - 1 && (
                   <div
                     className={`h-0.5 flex-1 origin-left bg-gradient-to-r from-[#459F94] to-[#EDB118] transition-transform duration-300 ${isInView ? "scale-x-100" : "scale-x-0"}`}
-                    style={{ transitionDelay: `${0.4 + i * 0.15}s` }}
                   />
                 )}
               </Fragment>
@@ -107,12 +97,7 @@ export function HowItWorksSection() {
                 key={step.number}
                 className={`reveal flex flex-col items-center gap-8 lg:gap-12 ${
                   isEven ? "lg:flex-row" : "lg:flex-row-reverse"
-                } ${isInView ? "in-view" : ""}`}
-                style={
-                  {
-                    "--stagger": `${0.2 + index * 0.15}s`,
-                  } as React.CSSProperties
-                }
+                } ${staggerClasses[index % 5]} ${isInView ? "in-view" : ""}`}
               >
                 {/* Number circle */}
                 <div className="flex shrink-0 items-center justify-center">

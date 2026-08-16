@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Download, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, Trash2, Loader2, FileText, Subtitles, Video } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,10 +15,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { deleteCaptionJob } from "~/actions/captions";
 import { CAPTION_STYLE_CONFIGS } from "~/lib/caption-styles";
 import { clientEnv } from "~/lib/env";
-import { formatDuration, formatBytes } from "~/lib/utils";
+import { formatDuration, formatBytes, cn } from "~/lib/utils";
 import type { CaptionJob } from "~/types/caption";
 
 interface CaptionResultViewerProps {
@@ -49,6 +55,12 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
   const downloadUrl = job.backendJobId
     ? `${backendBaseUrl}/api/download/${job.backendJobId}`
     : null;
+  const srtDownloadUrl = job.backendJobId
+    ? `${backendBaseUrl}/api/download/${job.backendJobId}?format=srt`
+    : null;
+  const assDownloadUrl = job.backendJobId
+    ? `${backendBaseUrl}/api/download/${job.backendJobId}?format=ass`
+    : null;
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -60,13 +72,20 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
     }
   };
 
+  const handleDownload = (url: string | null) => {
+    if (!url) return;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   // Still processing state
   if (job.status === "processing" || job.status === "uploading") {
     return (
-      <div
-        className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50 p-6 dark:bg-gray-950"
-        style={{ fontFamily: "var(--font-outfit)" }}
-      >
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50 p-6 dark:bg-gray-950">
         <Loader2 className="h-8 w-8 animate-spin text-[#459F94]" />
         <p className="text-base font-medium text-gray-700 dark:text-gray-300">
           Still processing...
@@ -84,10 +103,7 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
   // Failed state
   if (job.status === "failed") {
     return (
-      <div
-        className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50 p-6 dark:bg-gray-950"
-        style={{ fontFamily: "var(--font-outfit)" }}
-      >
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50 p-6 dark:bg-gray-950">
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-6 py-8 text-center">
           <p className="mb-2 text-base font-semibold text-red-400">
             Processing failed
@@ -106,11 +122,10 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
     );
   }
 
+  const dotClass = `style-dot-${job.captionStyle}`;
+
   return (
-    <div
-      className="min-h-screen bg-gray-50 dark:bg-gray-950"
-      style={{ fontFamily: "var(--font-outfit)" }}
-    >
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Top bar */}
       <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/80">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-6 py-3">
@@ -134,14 +149,39 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
           {/* Actions */}
           <div className="flex items-center gap-2">
             {downloadUrl && (
-              <a
-                href={downloadUrl}
-                download={`captioned-${job.originalFileName}`}
-                className="flex items-center gap-1.5 rounded-lg bg-[#459F94] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#367d74]"
-              >
-                <Download className="h-4 w-4" />
-                Download
-              </a>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#459F94] px-3.5 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#367d74]">
+                  <Download className="h-4 w-4" />
+                  Download
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem
+                    onClick={() => handleDownload(downloadUrl)}
+                    className="flex cursor-pointer items-center gap-2"
+                  >
+                    <Video className="h-4 w-4 text-[#459F94]" />
+                    <span>Captioned Video (.mp4)</span>
+                  </DropdownMenuItem>
+                  {srtDownloadUrl && (
+                    <DropdownMenuItem
+                      onClick={() => handleDownload(srtDownloadUrl)}
+                      className="flex cursor-pointer items-center gap-2"
+                    >
+                      <FileText className="h-4 w-4 text-[#459F94]" />
+                      <span>Subtitles (.srt)</span>
+                    </DropdownMenuItem>
+                  )}
+                  {assDownloadUrl && (
+                    <DropdownMenuItem
+                      onClick={() => handleDownload(assDownloadUrl)}
+                      className="flex cursor-pointer items-center gap-2"
+                    >
+                      <Subtitles className="h-4 w-4 text-[#459F94]" />
+                      <span>Styled Subtitles (.ass)</span>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
 
             <AlertDialog>
@@ -187,8 +227,7 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
             {downloadUrl ? (
               <video
                 controls
-                className="w-full rounded-2xl bg-black shadow-lg"
-                style={{ maxHeight: "70vh" }}
+                className="max-h-player w-full rounded-2xl bg-black shadow-lg"
               >
                 <source src={downloadUrl} />
                 Your browser does not support the video tag.
@@ -224,7 +263,7 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
                     Language detected
                   </dt>
                   <dd className="mt-0.5 text-sm font-medium text-gray-900 dark:text-white">
-                    {job.language}
+                    {job.language.toUpperCase()}
                   </dd>
                 </div>
               )}
@@ -234,12 +273,7 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
                   Caption style
                 </dt>
                 <dd className="mt-0.5 flex items-center gap-1.5">
-                  <span
-                    className="h-3.5 w-3.5 flex-shrink-0 rounded-full ring-1 ring-black/20"
-                    style={{
-                      background: `linear-gradient(135deg, ${styleConfig.primaryColor} 50%, ${styleConfig.highlightColor} 50%)`,
-                    }}
-                  />
+                  <span className={cn("h-3.5 w-3.5 flex-shrink-0 rounded-full ring-1 ring-black/20", dotClass)} />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     {styleConfig.name}
                   </span>

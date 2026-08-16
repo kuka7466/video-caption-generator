@@ -25,11 +25,11 @@ function getPhaseLabel(phase: CaptionPhase | null): string {
     case "uploading":
       return "Uploading Video...";
     case "transcribing":
-      return "Transcribing Audio...";
+      return "Transcribing Audio (AI)...";
     case "burning":
-      return "Burning Captions...";
+      return "Burning Captions (FFmpeg)...";
     case "finalizing":
-      return "Finalizing...";
+      return "Finalizing Video...";
     default:
       return "Processing...";
   }
@@ -60,7 +60,7 @@ export function ProcessingView({ jobId, onComplete, onError }: ProcessingViewPro
     }
 
     poll();
-    intervalRef.current = setInterval(poll, 3000);
+    intervalRef.current = setInterval(poll, 2500);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -74,7 +74,7 @@ export function ProcessingView({ jobId, onComplete, onError }: ProcessingViewPro
 
   if (job?.status === "failed") {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-red-500/30 bg-red-500/10 p-8 font-[family-name:var(--font-outfit)]">
+      <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-red-500/30 bg-red-500/10 p-8">
         <p className="text-center text-red-400">
           {job.errorMessage ?? "Processing failed. Please try again."}
         </p>
@@ -90,18 +90,11 @@ export function ProcessingView({ jobId, onComplete, onError }: ProcessingViewPro
   }
 
   return (
-    <div className="flex flex-col gap-6 font-[family-name:var(--font-outfit)]">
+    <div className="flex flex-col gap-6">
       {/* Video preview placeholder with scanning overlay */}
-      <div className="relative overflow-hidden rounded-xl bg-[#0a0a0a]" style={{ aspectRatio: "16/9" }}>
+      <div className="relative aspect-video overflow-hidden rounded-xl bg-[#0a0a0a]">
         {/* Grid pattern */}
-        <div
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(69,159,148,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(69,159,148,0.3) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
+        <div className="bg-grid-scanner absolute inset-0 opacity-20" />
 
         {/* Scan line animation */}
         <div className="animate-scan-line absolute inset-y-0 w-0.5 bg-gradient-to-b from-transparent via-[#459F94] to-transparent opacity-80" />

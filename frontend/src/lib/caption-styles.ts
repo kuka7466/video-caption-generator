@@ -28,7 +28,17 @@ function buildStyleConfigs(): Record<CaptionStyle, CaptionStyleConfig> {
 }
 
 export const CAPTION_STYLES: CaptionStyle[] = [
-  "hormozi", "mrbeast", "karaoke", "minimal", "bounce", "classic",
+  "hormozi",
+  "mrbeast",
+  "karaoke",
+  "minimal",
+  "bounce",
+  "classic",
+  "cyberpunk",
+  "aliabdaal",
+  "cinematic",
+  "spotlight",
+  "retrowave",
 ];
 
 export const CAPTION_STYLE_CONFIGS = buildStyleConfigs();
