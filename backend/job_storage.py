@@ -141,6 +141,15 @@ class JobStorage:
     def delete_job(self, job_id: str) -> bool:
         with self._lock:
             if job_id in self._jobs:
+                job = self._jobs[job_id]
+                # Clean video files
+                for key in ["video_path", "output_path"]:
+                    p = job.get(key)
+                    if p and os.path.isfile(p):
+                        try:
+                            os.remove(p)
+                        except OSError:
+                            pass
                 del self._jobs[job_id]
                 self._persist()
                 return True

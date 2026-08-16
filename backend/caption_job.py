@@ -342,12 +342,7 @@ def process_caption_job(
         # Phase 5: Cleanup & Complete
         if os.path.isdir(temp_job_dir):
             shutil.rmtree(temp_job_dir, ignore_errors=True)
-
-        if os.path.isfile(video_path):
-            try:
-                os.remove(video_path)
-            except OSError:
-                pass
+        # Note: video_path is preserved in uploads/ so users can edit and re-render captions freely
 
         storage.update_status(
             job_id,
@@ -375,13 +370,20 @@ def rerender_caption_job(
     if not job:
         raise ValueError(f"Job not found: {job_id}")
 
-    video_path = job["video_path"]
+    video_path = job.get("video_path")
     temp_job_dir = os.path.join(data_dir, "temp", job_id)
     ass_path = os.path.join(temp_job_dir, "subtitles.ass")
     output_dir = os.path.join(data_dir, "output", job_id)
     output_path = os.path.join(output_dir, "captioned.mp4")
     out_ass_path = os.path.join(output_dir, "subtitles.ass")
     out_srt_path = os.path.join(output_dir, "subtitles.srt")
+
+    # If original video_path was pruned, fallback to the existing output video
+    if not video_path or not os.path.isfile(video_path):
+        if os.path.isfile(output_path):
+            video_path = output_path
+        else:
+            raise FileNotFoundError(f"Video file not found on server for re-rendering: {video_path}")
 
     os.makedirs(temp_job_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
