@@ -295,11 +295,14 @@ def generate_ass(
 
     # Generate subtitle events with word animations
     for _, line_end, word_list in subtitles:
-        for idx, (word, word_start, _, _) in enumerate(word_list):
+        for idx, (word, word_start, word_end_time, _) in enumerate(word_list):
             if idx < len(word_list) - 1:
                 event_end = word_list[idx + 1][1]
             else:
                 event_end = line_end
+
+            # Calculate actual word duration in milliseconds for animation timing
+            w_duration_ms = max(250, int((word_end_time - word_start) * 1000))
 
             text_parts: list[str] = []
             prev_line_idx = None
@@ -322,35 +325,53 @@ def generate_ass(
                             duration_cs = int((w_end - w_start) * 100) if w_end > w_start else 30
                             text_parts.append(f"{{\\kf{duration_cs}\\c{word_color}}}{w_escaped}{{\\r}}")
                     elif effective_anim == "stretch":
+                        t1 = int(w_duration_ms * 0.35)
+                        t2 = int(w_duration_ms * 0.70)
                         text_parts.append(
-                            f"{{\\t(0,60,\\fscx126\\fscy82)"
-                            f"\\t(60,130,\\fscx100\\fscy100)"
+                            f"{{\\t(0,{t1},\\fscx135\\fscy78)"
+                            f"\\t({t1},{t2},\\fscx95\\fscy106)"
+                            f"\\t({t2},{w_duration_ms},\\fscx100\\fscy100)"
                             f"\\c{word_color}}}{w_escaped}{{\\r}}"
                         )
                     elif effective_anim == "glitch":
+                        t1 = int(w_duration_ms * 0.20)
+                        t2 = int(w_duration_ms * 0.45)
+                        t3 = int(w_duration_ms * 0.70)
                         text_parts.append(
                             f"{{\\c&H00F0FF&\\3c&HFF007F&"
-                            f"\\t(0,40,\\c&HFF007F&\\3c&H00F0FF&)"
-                            f"\\t(40,100,\\c{word_color})}}{w_escaped}{{\\r}}"
+                            f"\\t(0,{t1},\\c&HFF007F&\\3c&H00F0FF&)"
+                            f"\\t({t1},{t2},\\c&H00F0FF&\\3c&H000000&)"
+                            f"\\t({t2},{w_duration_ms},\\c{word_color})}}{w_escaped}{{\\r}}"
                         )
                     elif effective_anim == "slide":
+                        t1 = int(w_duration_ms * 0.40)
+                        t2 = int(w_duration_ms * 0.80)
                         text_parts.append(
-                            f"{{\\t(0,50,\\frz-4\\fscy110)"
-                            f"\\t(50,110,\\frz0\\fscy100)"
+                            f"{{\\t(0,{t1},\\frz-4\\fscy116)"
+                            f"\\t({t1},{t2},\\frz0\\fscy100)"
                             f"\\c{word_color}}}{w_escaped}{{\\r}}"
                         )
                     elif effective_anim == "blur":
+                        t1 = int(w_duration_ms * 0.50)
                         text_parts.append(
-                            f"{{\\blur5\\t(0,60,\\blur0)"
+                            f"{{\\blur7\\t(0,{t1},\\blur0)"
                             f"\\c{word_color}}}{w_escaped}{{\\r}}"
                         )
                     elif effective_anim == "scale":
-                        text_parts.append(f"{{\\fscx114\\fscy114\\c{word_color}}}{w_escaped}{{\\r}}")
-                    elif effective_anim == "bounce":
-                        bounce_pct = 120 if font_scale >= 1.0 else 112
+                        t1 = int(w_duration_ms * 0.40)
                         text_parts.append(
-                            f"{{\\t(0,50,\\fscx{bounce_pct}\\fscy{bounce_pct})"
-                            f"\\t(50,100,\\fscx100\\fscy100)"
+                            f"{{\\t(0,{t1},\\fscx122\\fscy122)"
+                            f"\\t({t1},{w_duration_ms},\\fscx100\\fscy100)"
+                            f"\\c{word_color}}}{w_escaped}{{\\r}}"
+                        )
+                    elif effective_anim == "bounce":
+                        t1 = int(w_duration_ms * 0.35)
+                        t2 = int(w_duration_ms * 0.70)
+                        bounce_pct = 126 if font_scale >= 1.0 else 118
+                        text_parts.append(
+                            f"{{\\t(0,{t1},\\fscx{bounce_pct}\\fscy{bounce_pct})"
+                            f"\\t({t1},{t2},\\fscx95\\fscy95)"
+                            f"\\t({t2},{w_duration_ms},\\fscx100\\fscy100)"
                             f"\\c{word_color}}}{w_escaped}{{\\r}}"
                         )
                     else:

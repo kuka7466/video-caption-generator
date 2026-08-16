@@ -304,6 +304,10 @@ def process_caption_job(
             text_transform=text_transform,
             primary_color=primary_color,
             highlight_color=highlight_color,
+            outline_enabled=outline_enabled,
+            outline_color=outline_color,
+            outline_size=outline_size,
+            animation_type=animation_type,
         )
 
         if has_subtitles and os.path.isfile(ass_path):

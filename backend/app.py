@@ -167,6 +167,10 @@ def create_app(testing: bool = False) -> Flask:
                     "text_transform": text_transform,
                     "primary_color": primary_color,
                     "highlight_color": highlight_color,
+                    "outline_enabled": outline_enabled,
+                    "outline_color": outline_color,
+                    "outline_size": outline_size,
+                    "animation_type": animation_type,
                 },
                 daemon=True,
             )
