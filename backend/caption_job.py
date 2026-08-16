@@ -168,6 +168,9 @@ def generate_ass_from_transcript(
     text_transform: str = "uppercase",
     primary_color: str | None = None,
     highlight_color: str | None = None,
+    outline_enabled: bool = True,
+    outline_color: str | None = None,
+    outline_size: float | None = None,
 ) -> bool:
     """Generate an ASS subtitle file from a transcript dict."""
     import subtitles
@@ -189,17 +192,26 @@ def generate_ass_from_transcript(
         text_transform=text_transform,
         primary_color_override=primary_color,
         highlight_color_override=highlight_color,
+        outline_enabled=outline_enabled,
+        outline_color=outline_color,
+        outline_size=outline_size,
     )
 
 
 def burn_subtitles(video_path: str, ass_path: str, output_path: str) -> bool:
     """Burn ASS subtitles into *video_path* and write to *output_path*."""
     escaped_ass = ass_path.replace("\\", "/").replace(":", r"\:")
+    fonts_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "fonts"))
+    if os.path.exists(fonts_dir):
+        escaped_fonts_dir = fonts_dir.replace("\\", "/").replace(":", r"\:")
+        ass_filter = f"ass='{escaped_ass}':fontsdir='{escaped_fonts_dir}'"
+    else:
+        ass_filter = f"ass='{escaped_ass}'"
     cmd = [
         "ffmpeg",
         "-y",
         "-i", video_path,
-        "-vf", f"ass='{escaped_ass}'",
+        "-vf", ass_filter,
         "-c:v", "libx264",
         "-preset", "veryfast",
         "-crf", "18",
@@ -232,6 +244,9 @@ def process_caption_job(
     text_transform: str = "uppercase",
     primary_color: str | None = None,
     highlight_color: str | None = None,
+    outline_enabled: bool = True,
+    outline_color: str | None = None,
+    outline_size: float | None = None,
 ) -> None:
     """Run the full captioning pipeline for a job."""
     temp_job_dir = os.path.join(data_dir, "temp", job_id)

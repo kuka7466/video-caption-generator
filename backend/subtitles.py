@@ -48,6 +48,9 @@ def generate_ass(
     text_transform: str = "uppercase",
     primary_color_override: str | None = None,
     highlight_color_override: str | None = None,
+    outline_enabled: bool = True,
+    outline_color: str | None = None,
+    outline_size: float | None = None,
 ) -> bool:
     """Generate an ASS subtitle file with styled word-by-word animations.
 
@@ -257,8 +260,16 @@ def generate_ass(
     new_style.primarycolor = _parse_ass_or_hex_color(primary_color_override or style_config.primary_color, style_config.primary_color)
     new_style.bold = style_config.bold
     new_style.italic = style_config.italic
-    new_style.outline = round(style_config.outline_size * effective_scale, 1)
-    new_style.outlinecolor = _parse_ass_or_hex_color(style_config.outline_color, style_config.outline_color)
+    # Outline controls
+    if outline_enabled is False or (outline_size is not None and float(outline_size) == 0):
+        new_style.outline = 0.0
+    else:
+        base_outline = float(outline_size) if outline_size is not None else style_config.outline_size
+        new_style.outline = round(base_outline * effective_scale, 1)
+        if outline_color:
+            new_style.outlinecolor = _parse_ass_or_hex_color(outline_color, style_config.outline_color)
+        else:
+            new_style.outlinecolor = _parse_ass_or_hex_color(style_config.outline_color, style_config.outline_color)
     new_style.shadow = round(style_config.shadow_depth * effective_scale, 1)
     new_style.shadowcolor = _parse_ass_or_hex_color(style_config.shadow_color, style_config.shadow_color)
     new_style.alignment = pysubs2.Alignment.BOTTOM_CENTER

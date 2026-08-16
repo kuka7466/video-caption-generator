@@ -15,6 +15,7 @@ import {
   WrapText,
   CaseSensitive,
   Pipette,
+  Layers,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { VideoDropzone } from "~/components/video-dropzone";
@@ -89,6 +90,14 @@ const FONT_SIZE_OPTIONS = [
   { value: 1.5, label: "Extra Large (150%)" },
 ];
 
+const OUTLINE_SIZE_OPTIONS = [
+  { value: "default", label: "Style Default" },
+  { value: "2", label: "Thin (2px)" },
+  { value: "5", label: "Medium (5px)" },
+  { value: "8", label: "Thick (8px)" },
+  { value: "12", label: "Heavy (12px)" },
+];
+
 const TEXT_CASE_OPTIONS = [
   { value: "uppercase", label: "UPPERCASE (ALL CAPS)" },
   { value: "titlecase", label: "Title Case" },
@@ -120,6 +129,11 @@ export function HeroSection() {
   const [textTransform, setTextTransform] = useState<string>("uppercase");
   const [customPrimaryColor, setCustomPrimaryColor] = useState<string>("");
   const [customHighlightColor, setCustomHighlightColor] = useState<string>("");
+
+  // Outline controls
+  const [outlineEnabled, setOutlineEnabled] = useState<boolean>(true);
+  const [customOutlineColor, setCustomOutlineColor] = useState<string>("");
+  const [outlineSize, setOutlineSize] = useState<string>("default");
 
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
@@ -186,6 +200,15 @@ export function HeroSection() {
       formData.append("highlightColor", customHighlightColor);
     }
 
+    // Outline options
+    formData.append("outlineEnabled", String(outlineEnabled));
+    if (customOutlineColor) {
+      formData.append("outlineColor", customOutlineColor);
+    }
+    if (outlineSize !== "default") {
+      formData.append("outlineSize", outlineSize);
+    }
+
     const progressInterval = setInterval(() => {
       setUploadProgress((prev) => {
         if (prev === null || prev >= 90) return prev;
@@ -228,6 +251,7 @@ export function HeroSection() {
   const styleConfig = CAPTION_STYLE_CONFIGS[selectedStyle];
 
   const parsedWordsPerSegment = wordsPerSegment === "auto" ? 2 : parseInt(wordsPerSegment, 10);
+  const parsedOutlineSize = outlineSize === "default" ? null : parseFloat(outlineSize);
 
   return (
     <section className="relative min-h-[85vh] overflow-hidden bg-white pt-24 dark:bg-black">
@@ -457,6 +481,78 @@ export function HeroSection() {
                           </div>
                         </div>
 
+                        {/* Outline Controls (Toggle, Color & Thickness) */}
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                          <div>
+                            <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                              <Layers className="h-3.5 w-3.5 text-[#459F94]" />
+                              Subtitle Outline
+                            </label>
+                            <div className="flex gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setOutlineEnabled(true)}
+                                className={`flex-1 cursor-pointer rounded-lg border py-2 text-xs font-medium transition-colors ${
+                                  outlineEnabled
+                                    ? "border-[#459F94] bg-[#459F94]/10 text-[#459F94]"
+                                    : "border-border text-muted-foreground hover:border-[#459F94]/50"
+                                }`}
+                              >
+                                Outline On
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setOutlineEnabled(false)}
+                                className={`flex-1 cursor-pointer rounded-lg border py-2 text-xs font-medium transition-colors ${
+                                  !outlineEnabled
+                                    ? "border-[#459F94] bg-[#459F94]/10 text-[#459F94]"
+                                    : "border-border text-muted-foreground hover:border-[#459F94]/50"
+                                }`}
+                              >
+                                Outline Off
+                              </button>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                              <Pipette className="h-3.5 w-3.5 text-[#459F94]" />
+                              Outline Color
+                            </label>
+                            <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-2.5 py-1.5">
+                              <input
+                                type="color"
+                                value={customOutlineColor || styleConfig.outlineColor}
+                                onChange={(e) => setCustomOutlineColor(e.target.value)}
+                                disabled={!outlineEnabled}
+                                className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent disabled:opacity-40"
+                              />
+                              <span className="text-xs text-muted-foreground">
+                                {outlineEnabled ? (customOutlineColor || "Default") : "Disabled"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                              <Layers className="h-3.5 w-3.5 text-[#459F94]" />
+                              Outline Thickness
+                            </label>
+                            <select
+                              value={outlineSize}
+                              onChange={(e) => setOutlineSize(e.target.value)}
+                              disabled={!outlineEnabled || isUploading}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-[#459F94] focus:outline-none disabled:opacity-40"
+                            >
+                              {OUTLINE_SIZE_OPTIONS.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
                         {/* Text Case + Custom Colors */}
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                           <div>
@@ -481,7 +577,7 @@ export function HeroSection() {
                           <div>
                             <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                               <Pipette className="h-3.5 w-3.5 text-[#459F94]" />
-                              Custom Brand Colors
+                              Custom Text &amp; Highlight Colors
                             </label>
                             <div className="flex items-center gap-3">
                               <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-background px-2.5 py-1.5">
@@ -571,6 +667,9 @@ export function HeroSection() {
                 textTransform={textTransform}
                 primaryColorOverride={customPrimaryColor || null}
                 highlightColorOverride={customHighlightColor || null}
+                outlineEnabled={outlineEnabled}
+                outlineColorOverride={customOutlineColor || null}
+                outlineSizeOverride={parsedOutlineSize}
               />
             </div>
           </div>

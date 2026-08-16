@@ -18,6 +18,9 @@ interface CaptionPreviewProps {
   textTransform?: string;
   primaryColorOverride?: string | null;
   highlightColorOverride?: string | null;
+  outlineEnabled?: boolean;
+  outlineColorOverride?: string | null;
+  outlineSizeOverride?: number | null;
 }
 
 const POSITION_PRESETS = [
@@ -48,16 +51,20 @@ function getAnimationClass(animationType: string): string {
 }
 
 function buildTextShadow(
+  outlineEnabled: boolean,
   outlineColor: string,
   outlineSize: number,
   shadowDepth: number,
 ): string {
+  if (!outlineEnabled || outlineSize <= 0) {
+    return `0 ${shadowDepth}px ${shadowDepth * 2}px rgba(0,0,0,0.6)`;
+  }
   return [
     `${outlineSize}px ${outlineSize}px 0 ${outlineColor}`,
     `-${outlineSize}px -${outlineSize}px 0 ${outlineColor}`,
     `${outlineSize}px -${outlineSize}px 0 ${outlineColor}`,
     `-${outlineSize}px ${outlineSize}px 0 ${outlineColor}`,
-    `0 ${shadowDepth}px ${shadowDepth * 2}px rgba(0,0,0,0.5)`,
+    `0 ${shadowDepth}px ${shadowDepth * 2}px rgba(0,0,0,0.6)`,
   ].join(", ");
 }
 
@@ -86,6 +93,9 @@ export function CaptionPreview({
   textTransform = "uppercase",
   primaryColorOverride,
   highlightColorOverride,
+  outlineEnabled = true,
+  outlineColorOverride,
+  outlineSizeOverride,
 }: CaptionPreviewProps) {
   const screenRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -99,14 +109,21 @@ export function CaptionPreview({
   const animationClass = getAnimationClass(style.animationType);
   const effectivePrimaryColor = primaryColorOverride || style.primaryColor;
   const effectiveHighlightColor = highlightColorOverride || style.highlightColor;
+  const effectiveOutlineColor = outlineColorOverride || style.outlineColor;
+  const effectiveOutlineSize =
+    outlineSizeOverride !== undefined && outlineSizeOverride !== null
+      ? Math.round(outlineSizeOverride * 0.25 * 10) / 10
+      : style.previewOutlineSize;
+
   const effectiveFont = fontFamily && fontFamily !== "default" ? fontFamily : style.fontName;
 
   const previewBaseSize = isLandscape ? style.previewFontSize * 1.25 : style.previewFontSize;
   const computedFontSize = Math.round(previewBaseSize * fontSizeScale);
 
   const textShadow = buildTextShadow(
-    style.outlineColor,
-    style.previewOutlineSize,
+    outlineEnabled,
+    effectiveOutlineColor,
+    effectiveOutlineSize,
     style.previewShadowDepth,
   );
 
@@ -247,7 +264,7 @@ export function CaptionPreview({
                   fontWeight: style.bold ? 700 : 400,
                   fontStyle: style.italic ? "italic" : "normal",
                   fontSize: `${computedFontSize}px`,
-                  fontFamily: `${effectiveFont}, sans-serif`,
+                  fontFamily: `${effectiveFont}, -apple-system, sans-serif`,
                   textShadow,
                   ["--caption-primary" as string]: effectivePrimaryColor,
                   ["--caption-highlight" as string]: effectiveHighlightColor,

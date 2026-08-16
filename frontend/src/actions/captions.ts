@@ -63,6 +63,9 @@ export async function submitCaptionJob(
     const textTransform = formData.get("textTransform") as string | null;
     const primaryColor = formData.get("primaryColor") as string | null;
     const highlightColor = formData.get("highlightColor") as string | null;
+    const outlineEnabled = formData.get("outlineEnabled") as string | null;
+    const outlineColor = formData.get("outlineColor") as string | null;
+    const outlineSize = formData.get("outlineSize") as string | null;
 
     if (!file) {
       return { error: "No file provided" };
@@ -107,6 +110,15 @@ export async function submitCaptionJob(
     }
     if (highlightColor) {
       backendFormData.append("highlightColor", highlightColor);
+    }
+    if (outlineEnabled !== null) {
+      backendFormData.append("outlineEnabled", outlineEnabled);
+    }
+    if (outlineColor) {
+      backendFormData.append("outlineColor", outlineColor);
+    }
+    if (outlineSize && outlineSize !== "default") {
+      backendFormData.append("outlineSize", outlineSize);
     }
 
     const response = await fetch(`${env.BACKEND_URL}/api/process`, {
