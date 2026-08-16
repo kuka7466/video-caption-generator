@@ -540,6 +540,7 @@ export function HeroSection() {
                                 type="color"
                                 value={customOutlineColor || styleConfig.outlineColor}
                                 onChange={(e) => setCustomOutlineColor(e.target.value)}
+                                onInput={(e) => setCustomOutlineColor((e.target as HTMLInputElement).value)}
                                 disabled={!outlineEnabled}
                                 className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent disabled:opacity-40"
                               />
@@ -622,6 +623,7 @@ export function HeroSection() {
                                 type="color"
                                 value={customPrimaryColor || styleConfig.primaryColor}
                                 onChange={(e) => setCustomPrimaryColor(e.target.value)}
+                                onInput={(e) => setCustomPrimaryColor((e.target as HTMLInputElement).value)}
                                 className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent"
                               />
                               <span className="text-xs text-muted-foreground">Main Text Color: {customPrimaryColor || styleConfig.primaryColor}</span>
@@ -631,6 +633,7 @@ export function HeroSection() {
                                 type="color"
                                 value={customHighlightColor || styleConfig.highlightColor}
                                 onChange={(e) => setCustomHighlightColor(e.target.value)}
+                                onInput={(e) => setCustomHighlightColor((e.target as HTMLInputElement).value)}
                                 className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent"
                               />
                               <span className="text-xs text-muted-foreground">Active Highlight Color: {customHighlightColor || styleConfig.highlightColor}</span>
@@ -703,6 +706,7 @@ export function HeroSection() {
                 textTransform={textTransform}
                 primaryColorOverride={customPrimaryColor || null}
                 highlightColorOverride={customHighlightColor || null}
+                maxLines={parseInt(maxLines, 10) || 2}
                 outlineEnabled={outlineEnabled}
                 outlineColorOverride={customOutlineColor || null}
                 outlineSizeOverride={parsedOutlineSize}

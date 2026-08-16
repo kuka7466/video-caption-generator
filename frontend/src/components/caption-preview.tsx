@@ -13,6 +13,7 @@ interface CaptionPreviewProps {
   aspectRatio: AspectRatio;
   onAspectRatioChange: (ratio: AspectRatio) => void;
   wordsPerSegment?: number | null;
+  maxLines?: number;
   fontFamily?: string | null;
   fontSizeScale?: number;
   textTransform?: string;
@@ -36,6 +37,17 @@ const RATIO_OPTIONS: { id: AspectRatio; label: string; icon: React.ReactNode }[]
   { id: "vertical", label: "9:16 Mobile", icon: <Smartphone className="h-3.5 w-3.5" /> },
   { id: "square", label: "1:1 Square", icon: <Square className="h-3.5 w-3.5" /> },
   { id: "portrait", label: "4:5 Feed", icon: <PhonePortrait className="h-3.5 w-3.5" /> },
+];
+
+const ALL_SAMPLE_WORDS = [
+  "VIRAL",
+  "ANIMATED",
+  "CAPTIONS",
+  "FOR",
+  "HIGH",
+  "RETENTION",
+  "CREATOR",
+  "VIDEOS",
 ];
 
 function getAnimationClass(animationType: string): string {
@@ -98,6 +110,7 @@ export function CaptionPreview({
   aspectRatio,
   onAspectRatioChange,
   wordsPerSegment = 2,
+  maxLines = 2,
   fontFamily,
   fontSizeScale = 1.0,
   textTransform = "uppercase",
@@ -153,10 +166,17 @@ export function CaptionPreview({
     style.previewShadowDepth,
   );
 
-  const sampleWords = ["VIRAL", "ANIMATED", "CAPTIONS", "PREVIEW"].slice(
-    0,
-    wordsPerSegment ? Math.max(1, Math.min(4, wordsPerSegment)) : 2,
-  );
+  const wordCount = wordsPerSegment ? Math.max(1, Math.min(8, wordsPerSegment)) : 2;
+  const sampleWords = ALL_SAMPLE_WORDS.slice(0, wordCount);
+
+  // Instant layout split based on maxLines
+  const lines: string[][] = useMemo(() => {
+    if (maxLines === 1 || sampleWords.length <= 2) {
+      return [sampleWords];
+    }
+    const mid = Math.ceil(sampleWords.length / 2);
+    return [sampleWords.slice(0, mid), sampleWords.slice(mid)];
+  }, [sampleWords, maxLines]);
 
   const clientYToPosition = useCallback(
     (clientY: number) => {
@@ -208,6 +228,9 @@ export function CaptionPreview({
       window.removeEventListener("touchend", handleDragEnd);
     };
   }, [clientYToPosition, onPositionChange]);
+
+  // Unique state key for instant animation restart on any change
+  const stateKey = `${style.id}-${effectiveAnim}-${effectiveFont}-${fontSizeScale}-${textTransform}-${wordCount}-${maxLines}-${outlineEnabled}-${effectiveOutlineSize}-${effectiveOutlineColor}-${effectivePrimaryColor}-${effectiveHighlightColor}`;
 
   return (
     <div className="flex w-full flex-col items-center gap-3">
@@ -295,7 +318,7 @@ export function CaptionPreview({
             {/* Draggable Caption Overlay */}
             <div
               className={cn(
-                "absolute inset-x-0 flex justify-center px-4 transition-[bottom] duration-100",
+                "absolute inset-x-0 flex flex-col items-center justify-center px-4 transition-[bottom] duration-75",
                 "touch-none select-none",
                 isDragging ? "cursor-grabbing" : "cursor-grab",
               )}
@@ -303,8 +326,9 @@ export function CaptionPreview({
               onMouseDown={handleDragStart}
               onTouchStart={handleDragStart}
             >
-              <span
-                className="pointer-events-none text-center leading-tight tracking-wider"
+              <div
+                key={stateKey}
+                className="pointer-events-none flex flex-col items-center text-center leading-tight tracking-wider"
                 style={{
                   color: effectivePrimaryColor,
                   fontWeight: style.bold ? 700 : 400,
@@ -316,23 +340,32 @@ export function CaptionPreview({
                   ["--caption-highlight" as string]: effectiveHighlightColor,
                 }}
               >
-                {sampleWords.map((word, i) => {
-                  const displayWord = transformText(word, textTransform);
+                {lines.map((lineWords, lineIdx) => {
+                  let wordOffset = 0;
+                  if (lineIdx > 0 && lines[0]) {
+                    wordOffset = lines[0].length;
+                  }
                   return (
-                    <span key={word}>
-                      {i > 0 && " "}
-                      <span
-                        className={animationClass}
-                        style={{
-                          ["--delay" as string]: `${i * 0.5}s`,
-                        }}
-                      >
-                        {displayWord}
-                      </span>
-                    </span>
+                    <div key={lineIdx} className="flex flex-wrap justify-center gap-x-1.5">
+                      {lineWords.map((word, i) => {
+                        const globalIdx = wordOffset + i;
+                        const displayWord = transformText(word, textTransform);
+                        return (
+                          <span
+                            key={`${word}-${globalIdx}`}
+                            className={animationClass}
+                            style={{
+                              ["--delay" as string]: `${globalIdx * 0.45}s`,
+                            }}
+                          >
+                            {displayWord}
+                          </span>
+                        );
+                      })}
+                    </div>
                   );
                 })}
-              </span>
+              </div>
             </div>
 
             {/* Drag hint */}
