@@ -154,3 +154,28 @@ def test_download_srt_and_ass_formats(app, client):
     ass_resp = client.get(f"/api/download/{job_id}?format=ass")
     assert ass_resp.status_code == 200
     assert b"Script Info" in ass_resp.data
+
+
+def test_process_with_all_motion_and_advanced_options(app, client):
+    """Process endpoint handles all advanced motion graphics and outline parameters cleanly."""
+    data = {
+        "file": (io.BytesIO(b"\x00" * 100), "test.mp4"),
+        "captionStyle": "cyberpunk",
+        "captionPosition": "15",
+        "wordsPerSegment": "2",
+        "maxLines": "1",
+        "fontFamily": "Anton",
+        "fontSizeScale": "1.25",
+        "textTransform": "uppercase",
+        "primaryColor": "#FFFFFF",
+        "highlightColor": "#FF007F",
+        "outlineEnabled": "true",
+        "outlineColor": "#000000",
+        "outlineSize": "5",
+        "animationType": "stretch",
+    }
+    response = client.post("/api/process", data=data, content_type="multipart/form-data")
+    assert response.status_code == 200
+    res_json = response.get_json()
+    assert "jobId" in res_json
+    assert res_json["status"] == "pending"

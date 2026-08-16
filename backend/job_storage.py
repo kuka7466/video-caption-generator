@@ -41,6 +41,10 @@ class JobStorage:
         text_transform: str = "uppercase",
         primary_color: str | None = None,
         highlight_color: str | None = None,
+        outline_enabled: bool = False,
+        outline_color: str | None = None,
+        outline_size: float | None = None,
+        animation_type: str | None = None,
     ) -> str:
         job_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc).isoformat()

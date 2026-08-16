@@ -118,6 +118,16 @@ def create_app(testing: bool = False) -> Flask:
         primary_color = request.form.get("primaryColor")
         highlight_color = request.form.get("highlightColor")
 
+        outline_enabled_raw = request.form.get("outlineEnabled", "false").lower()
+        outline_enabled = outline_enabled_raw in ("true", "1", "yes", "on")
+        outline_color = request.form.get("outlineColor")
+        outline_size_raw = request.form.get("outlineSize")
+        try:
+            outline_size = float(outline_size_raw) if outline_size_raw not in (None, "", "default") else None
+        except (ValueError, TypeError):
+            outline_size = None
+        animation_type = request.form.get("animationType")
+
         safe_original_name = secure_filename(file.filename) or "video.mp4"
         upload_id = str(uuid.uuid4())
         ext = safe_original_name.rsplit(".", 1)[-1].lower() if "." in safe_original_name else "mp4"
@@ -146,6 +156,10 @@ def create_app(testing: bool = False) -> Flask:
             text_transform=text_transform,
             primary_color=primary_color,
             highlight_color=highlight_color,
+            outline_enabled=outline_enabled,
+            outline_color=outline_color,
+            outline_size=outline_size,
+            animation_type=animation_type,
         )
 
         if not app.config.get("TESTING"):
