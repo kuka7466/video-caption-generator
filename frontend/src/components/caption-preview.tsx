@@ -292,7 +292,7 @@ export function CaptionPreview({
             ref={screenRef}
             className="relative h-full w-full overflow-hidden"
           >
-            {/* Blurred Background Image / Video */}
+            {/* Video or Ambient Background */}
             {videoUrl ? (
               <video
                 src={videoUrl}
@@ -300,20 +300,21 @@ export function CaptionPreview({
                 loop
                 muted
                 playsInline
-                className="absolute inset-0 h-full w-full object-cover filter blur-[2px] opacity-75 scale-105"
+                className="absolute inset-0 h-full w-full object-cover"
               />
             ) : (
-              <div className="absolute inset-0 overflow-hidden">
-                {/* Cinematic Ambient Blurred Background Scene */}
-                <div className="absolute -inset-4 bg-gradient-to-br from-indigo-900/60 via-purple-950/80 to-slate-950 filter blur-sm scale-110" />
-                <div className="absolute top-1/4 left-1/3 h-28 w-28 rounded-full bg-[#459F94]/30 filter blur-xl animate-pulse" />
-                <div className="absolute bottom-1/3 right-1/4 h-32 w-32 rounded-full bg-[#EDB118]/25 filter blur-xl" />
-                <div className="absolute inset-0 bg-radial from-transparent via-black/40 to-black/80" />
-              </div>
+              <>
+                <div className="absolute inset-0 overflow-hidden">
+                  {/* Cinematic Ambient Blurred Background Scene */}
+                  <div className="absolute -inset-4 bg-gradient-to-br from-indigo-900/60 via-purple-950/80 to-slate-950 filter blur-sm scale-110" />
+                  <div className="absolute top-1/4 left-1/3 h-28 w-28 rounded-full bg-[#459F94]/30 filter blur-xl animate-pulse" />
+                  <div className="absolute bottom-1/3 right-1/4 h-32 w-32 rounded-full bg-[#EDB118]/25 filter blur-xl" />
+                  <div className="absolute inset-0 bg-radial from-transparent via-black/40 to-black/80" />
+                </div>
+                {/* Dark Vignette Overlay for Readability when no video */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+              </>
             )}
-
-            {/* Dark Vignette Overlay for Readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
 
             {/* Draggable Caption Overlay */}
             <div
