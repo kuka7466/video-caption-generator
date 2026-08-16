@@ -125,6 +125,7 @@ export function CaptionPreview({
   const screenRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const isDraggingRef = useRef(false);
+  const [safeZone, setSafeZone] = useState<"none" | "tiktok" | "reels" | "shorts">("none");
 
   const videoUrl = useMemo(() => {
     if (!videoFile) return null;
@@ -368,6 +369,28 @@ export function CaptionPreview({
                 })}
               </div>
             </div>
+
+            {/* Social Media Safe Zone Overlay */}
+            {safeZone !== "none" && (
+              <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-between p-3">
+                {/* Top header safe boundary */}
+                <div className="rounded border border-dashed border-red-500/40 bg-red-500/10 px-2 py-1 text-center text-[8px] font-bold tracking-wider text-red-300">
+                  {safeZone === "tiktok" ? "TIKTOK TOP BAR & SEARCH" : safeZone === "reels" ? "REELS HEADER & AUDIO" : "SHORTS TOP SEARCH"}
+                </div>
+
+                {/* Center safe area */}
+                <div className="flex flex-1 items-center justify-end pr-2">
+                  <div className="rounded border border-dashed border-red-500/40 bg-red-500/10 p-1 text-[7px] font-bold text-red-300 text-right">
+                    {safeZone === "tiktok" ? "LIKE / COMMENT / SHARE" : safeZone === "reels" ? "REELS ACTIONS" : "SHORTS ACTIONS"}
+                  </div>
+                </div>
+
+                {/* Bottom caption safe boundary */}
+                <div className="rounded border border-dashed border-red-500/40 bg-red-500/10 px-2 py-1 text-center text-[8px] font-bold tracking-wider text-red-300">
+                  {safeZone === "tiktok" ? "TIKTOK USERNAME & SOUND CAPTION" : safeZone === "reels" ? "REELS DESCRIPTION & AUDIO" : "SHORTS TITLE & CHANNEL"}
+                </div>
+              </div>
+            )}
 
             {/* Drag hint */}
             {!isDragging && (

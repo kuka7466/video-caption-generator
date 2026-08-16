@@ -86,6 +86,9 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
   const [transcript, setTranscript] = useState<TranscriptData | null>(null);
   const [videoTimestamp, setVideoTimestamp] = useState<number>(Date.now());
   const [activeTab, setActiveTab] = useState<"transcript" | "export">("transcript");
+  const [currentPlaybackTime, setCurrentPlaybackTime] = useState<number>(0);
+  const [activeSegIndex, setActiveSegIndex] = useState<number>(-1);
+  const [selectedWordTag, setSelectedWordTag] = useState<string>("gold");
 
   const styleConfig = CAPTION_STYLE_CONFIGS[job.captionStyle] || {
     name: job.captionStyle || "Custom Style",
@@ -131,6 +134,88 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  };
+
+
+  // Click-to-seek video sync
+  const seekToTime = (seconds: number) => {
+    const videoEl = document.getElementById("caption-result-video") as HTMLVideoElement | null;
+    if (videoEl) {
+      videoEl.currentTime = seconds;
+      videoEl.play().catch(() => {});
+    }
+  };
+
+  // Track playback time to highlight active segment
+  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const time = e.currentTarget.currentTime;
+    setCurrentPlaybackTime(time);
+    if (transcript?.segments) {
+      const idx = transcript.segments.findIndex((s) => time >= s.start && time <= s.end);
+      setActiveSegIndex(idx);
+    }
+  };
+
+  // Keyboard shortcut: Ctrl+Enter / Cmd+Enter to re-render
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        void handleSaveAndRerender();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [transcript, job.backendJobId]);
+
+
+  // Cycle word emphasis color: none -> <gold> -> <cyan> -> <pink> -> <green> -> none
+  const cycleWordEmphasis = (segIdx: number, wordIdx: number) => {
+    if (!transcript) return;
+    const newSegments = [...transcript.segments];
+    const targetSeg = { ...newSegments[segIdx] };
+    const targetWords = [...targetSeg.words];
+    const currentWord = targetWords[wordIdx].word;
+
+    const tags = ["<gold>", "<cyan>", "<pink>", "<green>", "<red>"];
+    let rawWord = currentWord;
+    let currentTag = "";
+
+    for (const tag of tags) {
+      const closeTag = tag.replace("<", "</");
+      if (rawWord.includes(tag)) {
+        currentTag = tag;
+        rawWord = rawWord.replace(tag, "").replace(closeTag, "");
+        break;
+      }
+    }
+
+    let nextWord = rawWord;
+    if (currentTag === "") {
+      nextWord = `<gold>${rawWord}</gold>`;
+    } else if (currentTag === "<gold>") {
+      nextWord = `<cyan>${rawWord}</cyan>`;
+    } else if (currentTag === "<cyan>") {
+      nextWord = `<pink>${rawWord}</pink>`;
+    } else if (currentTag === "<pink>") {
+      nextWord = `<green>${rawWord}</green>`;
+    } else {
+      nextWord = rawWord; // reset to plain
+    }
+
+    targetWords[wordIdx] = {
+      ...targetWords[wordIdx],
+      word: nextWord,
+    };
+    targetSeg.words = targetWords;
+    targetSeg.text = targetWords.map((w) => w.word).join(" ");
+    newSegments[segIdx] = targetSeg;
+
+    setTranscript({
+      ...transcript,
+      segments: newSegments,
+    });
+    toast.success("Toggled keyword emphasis color!");
   };
 
   const handleWordChange = (segIdx: number, wordIdx: number, newWordValue: string) => {
@@ -309,9 +394,11 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
             <div className="overflow-hidden rounded-2xl border border-gray-200 bg-black shadow-xl dark:border-gray-800">
               {downloadUrl ? (
                 <video
+                  id="caption-result-video"
                   key={videoTimestamp}
                   controls
                   autoPlay
+                  onTimeUpdate={handleTimeUpdate}
                   className="max-h-[520px] w-full object-contain"
                 >
                   <source src={downloadUrl} type="video/mp4" />
@@ -378,7 +465,7 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
                   className="flex cursor-pointer items-center gap-2 rounded-xl bg-[#459F94] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-[#367d74] disabled:opacity-50"
                 >
                   <RefreshCw className={cn("h-3.5 w-3.5", isRerendering && "animate-spin")} />
-                  <span>{isRerendering ? "Re-rendering..." : "Update & Re-render Video"}</span>
+                  <span>{isRerendering ? "Re-rendering..." : "Update & Re-render Video (Ctrl+Enter)"}</span>
                 </button>
               </div>
 
@@ -388,13 +475,23 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
                   {transcript.segments.map((seg, segIdx) => (
                     <div
                       key={segIdx}
-                      className="rounded-xl border border-border/80 bg-muted/20 p-4 transition-colors hover:border-[#459F94]/40"
+                      className={cn(
+                        "rounded-xl border p-4 transition-all",
+                        activeSegIndex === segIdx
+                          ? "border-[#459F94] bg-[#459F94]/5 ring-1 ring-[#459F94]/30 shadow-xs"
+                          : "border-border/80 bg-muted/20 hover:border-[#459F94]/40"
+                      )}
                     >
                       <div className="mb-2 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                          <Clock className="h-3 w-3 text-[#459F94]" />
-                          <span>{formatSeconds(seg.start)} &rarr; {formatSeconds(seg.end)}</span>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => seekToTime(seg.start)}
+                          title="Click to jump video to this segment"
+                          className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-background px-2 py-0.5 text-xs font-semibold text-[#459F94] shadow-2xs transition-colors hover:bg-[#459F94] hover:text-white"
+                        >
+                          <Clock className="h-3 w-3" />
+                          <span>{formatSeconds(seg.start)} &rarr; {formatSeconds(seg.end)} (Play)</span>
+                        </button>
                         <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
                           Segment #{segIdx + 1}
                         </span>
@@ -415,17 +512,35 @@ export function CaptionResultViewer({ job }: CaptionResultViewerProps) {
                           {seg.words.map((w, wIdx) => (
                             <div
                               key={wIdx}
-                              className="flex items-center gap-1 rounded-md border border-border bg-background px-2 py-0.5 text-xs shadow-2xs"
+                              className={cn(
+                                "flex items-center gap-1 rounded-md border bg-background px-2 py-0.5 text-xs shadow-2xs transition-colors hover:border-[#459F94]",
+                                w.word.includes("<gold>") && "border-amber-400/80 bg-amber-400/10 text-amber-300",
+                                w.word.includes("<cyan>") && "border-cyan-400/80 bg-cyan-400/10 text-cyan-300",
+                                w.word.includes("<pink>") && "border-pink-400/80 bg-pink-400/10 text-pink-300",
+                                w.word.includes("<green>") && "border-emerald-400/80 bg-emerald-400/10 text-emerald-300",
+                                !w.word.includes("<") && "border-border"
+                              )}
                             >
+                              <button
+                                type="button"
+                                onClick={() => cycleWordEmphasis(segIdx, wIdx)}
+                                title="Click to cycle keyword highlight color (Gold/Cyan/Pink/Green)"
+                                className="h-2.5 w-2.5 flex-shrink-0 cursor-pointer rounded-full bg-current opacity-70 hover:opacity-100 ring-1 ring-black/20"
+                              />
                               <input
                                 type="text"
-                                value={w.word}
+                                value={w.word.replace(/<\/?[a-z]+>/g, "")}
                                 onChange={(e) => handleWordChange(segIdx, wIdx, e.target.value)}
-                                className="w-16 bg-transparent text-xs font-medium text-foreground focus:outline-none focus:text-[#459F94]"
+                                className="w-16 bg-transparent text-xs font-medium focus:outline-none"
                               />
-                              <span className="text-[9px] text-muted-foreground">
+                              <button
+                                type="button"
+                                onClick={() => seekToTime(w.start)}
+                                title="Play word in video"
+                                className="cursor-pointer text-[9px] font-semibold opacity-60 hover:opacity-100"
+                              >
                                 {w.start.toFixed(1)}s
-                              </span>
+                              </button>
                             </div>
                           ))}
                         </div>
