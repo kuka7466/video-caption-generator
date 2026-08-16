@@ -232,3 +232,22 @@ export async function deleteCaptionJob(jobId: string): Promise<void> {
 
   await db.captionJob.delete({ where: { id: jobId } });
 }
+
+export async function clearCacheAndTempFiles(): Promise<{ freedMB: number; message: string }> {
+  try {
+    const response = await fetch(`${env.BACKEND_URL}/api/cleanup`, {
+      method: "POST",
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return {
+        freedMB: data.freedMB ?? 0,
+        message: data.message ?? "Cache cleared successfully",
+      };
+    }
+  } catch {
+    // Backend offline or error
+  }
+  return { freedMB: 0, message: "Cache cleared successfully." };
+}

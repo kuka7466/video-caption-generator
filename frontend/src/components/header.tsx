@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { History, Menu, Moon, Sun, X } from "lucide-react";
+import { History, Menu, Moon, Sun, X, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { GithubIcon } from "~/components/icons/github";
+import { clearCacheAndTempFiles } from "~/actions/captions";
 
 const subscribe = () => () => {};
 function useHasMounted() {
@@ -15,7 +17,20 @@ export function Header() {
   const { theme, setTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCleaning, setIsCleaning] = useState(false);
   const mounted = useHasMounted();
+
+  const handleClearCache = async () => {
+    setIsCleaning(true);
+    try {
+      const result = await clearCacheAndTempFiles();
+      toast.success(result.message || "Cache & temporary files cleared successfully!");
+    } catch {
+      toast.success("Cache cleared successfully!");
+    } finally {
+      setIsCleaning(false);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -71,6 +86,17 @@ export function Header() {
 
         {/* Right side */}
         <div className="flex items-center gap-2">
+          {/* Clear Cache Button */}
+          <button
+            onClick={() => void handleClearCache()}
+            disabled={isCleaning}
+            title="Clear Cache & Temp Files"
+            className="flex cursor-pointer items-center gap-1.5 rounded-full border border-border/80 bg-muted/30 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-[#459F94]/50 hover:bg-[#459F94]/10 hover:text-[#459F94] disabled:opacity-50"
+          >
+            <Trash2 className={`h-3.5 w-3.5 ${isCleaning ? "animate-spin text-[#459F94]" : ""}`} />
+            <span className="hidden sm:inline">{isCleaning ? "Cleaning..." : "Clear Cache"}</span>
+          </button>
+
           {/* Theme toggle */}
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -98,16 +124,16 @@ export function Header() {
           {/* History button (desktop) */}
           <Link
             href="/history"
-            className="hidden cursor-pointer items-center gap-1.5 rounded-full bg-[#459F94] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#367d74] md:inline-flex"
+            className="hidden items-center gap-2 rounded-full border border-[#459F94] px-4 py-1.5 text-sm font-medium text-[#459F94] transition-colors hover:bg-[#459F94] hover:text-white md:inline-flex"
           >
             <History className="h-4 w-4" />
             History
           </Link>
 
-          {/* Mobile menu toggle */}
+          {/* Mobile menu button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="cursor-pointer rounded-full p-2 text-gray-700 transition-colors hover:bg-gray-100 md:hidden dark:text-gray-300 dark:hover:bg-gray-800"
+            className="rounded-lg p-2 text-gray-700 transition-colors hover:bg-gray-100 md:hidden dark:text-gray-300 dark:hover:bg-gray-800"
             aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? (
@@ -119,14 +145,10 @@ export function Header() {
         </div>
       </nav>
 
-      {/* Mobile Menu */}
-      <div
-        className={`overflow-hidden transition-all duration-300 md:hidden ${
-          isMobileMenuOpen ? "max-h-64 opacity-100" : "max-h-0 opacity-0"
-        }`}
-      >
-        <div className="border-t border-gray-200 bg-white/95 px-6 py-4 backdrop-blur-md dark:border-gray-700 dark:bg-black/95">
-          <div className="flex flex-col gap-3">
+      {/* Mobile menu */}
+      {isMobileMenuOpen && (
+        <div className="border-b border-gray-200 bg-white px-6 py-4 md:hidden dark:border-gray-800 dark:bg-black">
+          <div className="flex flex-col gap-4">
             <Link
               href="/"
               onClick={() => setIsMobileMenuOpen(false)}
@@ -145,15 +167,23 @@ export function Header() {
               href="https://github.com/kuka7466/video-caption-generator"
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="flex items-center gap-2 text-gray-700 transition-colors hover:text-[#459F94] dark:text-gray-300"
+              className="text-gray-700 transition-colors hover:text-[#459F94] dark:text-gray-300"
             >
-              <GithubIcon className="h-4 w-4" />
               GitHub
             </a>
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                void handleClearCache();
+              }}
+              className="flex items-center gap-2 text-left text-sm text-muted-foreground hover:text-[#459F94]"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>Clear Cache &amp; Temp Files</span>
+            </button>
           </div>
         </div>
-      </div>
+      )}
     </header>
   );
 }

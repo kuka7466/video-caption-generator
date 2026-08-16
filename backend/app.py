@@ -260,6 +260,38 @@ def create_app(testing: bool = False) -> Flask:
         storage.delete_job(job_id)
         return jsonify({"message": f"Job {job_id} deleted successfully", "deleted": True})
 
+
+    @app.route("/api/cleanup", methods=["POST"])
+    def cleanup_cache():
+        """Clean temporary files and cached processing artifacts."""
+        freed_bytes = 0
+        temp_dir = os.path.join(data_dir, "temp")
+        uploads_dir = os.path.join(data_dir, "uploads")
+
+        for target_folder in [temp_dir, uploads_dir]:
+            if os.path.exists(target_folder):
+                for root, dirs, files in os.walk(target_folder, topdown=False):
+                    for name in files:
+                        file_path = os.path.join(root, name)
+                        try:
+                            freed_bytes += os.path.getsize(file_path)
+                            os.remove(file_path)
+                        except Exception:
+                            pass
+                    for name in dirs:
+                        dir_path = os.path.join(root, name)
+                        try:
+                            os.rmdir(dir_path)
+                        except Exception:
+                            pass
+
+        freed_mb = round(freed_bytes / (1024 * 1024), 2)
+        return jsonify({
+            "status": "ok",
+            "freedMB": freed_mb,
+            "message": f"Successfully freed {freed_mb} MB of temporary files and cache."
+        }), 200
+
     return app
 
 
