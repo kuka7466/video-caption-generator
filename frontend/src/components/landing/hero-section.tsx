@@ -237,33 +237,36 @@ export function HeroSection() {
       {/* Grid pattern */}
       <div className="bg-grid-dots absolute inset-0 opacity-[0.03] dark:opacity-[0.05]" />
 
-      <div className="container relative mx-auto px-6 py-12">
-        <div className="flex flex-col gap-12 lg:flex-row lg:items-start lg:gap-16">
-          {/* Left Column - Hero Content & Upload Form */}
-          <div className="flex-1">
-            {/* Badge */}
-            <div className="animate-fade-up stagger-1 mb-6 inline-flex items-center gap-2 rounded-full border border-[#459F94]/30 bg-[#459F94]/10 px-4 py-1.5 text-sm font-medium text-[#459F94] dark:bg-[#459F94]/20">
-              <Sparkles className="h-4 w-4" />
-              <span>100% Free &amp; Open Source Standalone App</span>
-            </div>
+      <div className="container relative mx-auto px-6 py-10">
+        {/* Top Hero Header: Badge, Headline, Subheadline */}
+        <div className="mb-10 max-w-3xl">
+          {/* Badge */}
+          <div className="animate-fade-up stagger-1 mb-5 inline-flex items-center gap-2 rounded-full border border-[#459F94]/30 bg-[#459F94]/10 px-4 py-1.5 text-sm font-medium text-[#459F94] dark:bg-[#459F94]/20">
+            <Sparkles className="h-4 w-4" />
+            <span>100% Free &amp; Open Source Standalone App</span>
+          </div>
 
-            {/* Headline */}
-            <h1 className="animate-fade-up stagger-2 mb-6 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl dark:text-white">
-              AI-Powered{" "}
-              <span className="bg-gradient-to-r from-[#459F94] to-[#EDB118] bg-clip-text text-transparent">
-                Animated Captions
-              </span>{" "}
-              for Desktop &amp; Mobile
-            </h1>
+          {/* Headline */}
+          <h1 className="animate-fade-up stagger-2 mb-4 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl dark:text-white">
+            AI-Powered{" "}
+            <span className="bg-gradient-to-r from-[#459F94] to-[#EDB118] bg-clip-text text-transparent">
+              Animated Captions
+            </span>{" "}
+            for Desktop &amp; Mobile
+          </h1>
 
-            {/* Subheadline */}
-            <p className="animate-fade-up stagger-3 mb-8 max-w-xl text-lg text-gray-600 sm:text-xl dark:text-gray-400">
-              Add viral word-level animated subtitles in 11 creator styles.
-              Full support for 16:9 Desktop videos, 9:16 Shorts, customizable word
-              timing, fonts, and multi-format exports.
-            </p>
+          {/* Subheadline */}
+          <p className="animate-fade-up stagger-3 text-lg text-gray-600 sm:text-xl dark:text-gray-400">
+            Add viral word-level animated subtitles in 11 creator styles.
+            Full support for 16:9 Desktop videos, 9:16 Shorts, customizable word
+            timing, fonts, and multi-format exports.
+          </p>
+        </div>
 
-            {/* Main Interactive Card */}
+        {/* 2-Column Work Area: Left (Interactive Form) & Right (Live Preview aligned) */}
+        <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-12">
+          {/* Left Column - Main Interactive Card */}
+          <div className="flex-1 min-w-0">
             <div className="animate-fade-up stagger-4 rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-xl backdrop-blur-sm sm:p-8 dark:border-gray-800 dark:bg-gray-900/80">
               {/* Processing View */}
               {isProcessing && jobId && (
@@ -537,7 +540,7 @@ export function HeroSection() {
             </div>
 
             {/* Trust Indicators */}
-            <div className="animate-fade-up stagger-6 mt-8 flex flex-wrap items-center justify-center gap-6 sm:justify-start">
+            <div className="animate-fade-up stagger-6 mt-6 flex flex-wrap items-center justify-center gap-6 sm:justify-start">
               {trustIndicators.map((item) => (
                 <div
                   key={item.text}
@@ -550,24 +553,26 @@ export function HeroSection() {
             </div>
           </div>
 
-          {/* Right Column - Live Phone & Desktop Preview */}
-          <div className="hidden shrink-0 flex-col items-center lg:flex lg:w-[440px]">
-            <div className="mb-2 text-center text-xs font-medium uppercase tracking-wider text-gray-400">
-              Live Aspect Ratio &amp; Style Preview
+          {/* Right Column - Live Phone & Desktop Preview (Perfectly aligned with options card!) */}
+          <div className="hidden shrink-0 flex-col items-center lg:flex lg:w-[460px] lg:sticky lg:top-28">
+            <div className="w-full rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-xl backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/80">
+              <div className="mb-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                Live Aspect Ratio &amp; Style Preview
+              </div>
+              <CaptionPreview
+                style={styleConfig}
+                position={captionPosition}
+                onPositionChange={setCaptionPosition}
+                aspectRatio={aspectRatio}
+                onAspectRatioChange={setAspectRatio}
+                wordsPerSegment={parsedWordsPerSegment}
+                fontFamily={selectedFont}
+                fontSizeScale={fontSizeScale}
+                textTransform={textTransform}
+                primaryColorOverride={customPrimaryColor || null}
+                highlightColorOverride={customHighlightColor || null}
+              />
             </div>
-            <CaptionPreview
-              style={styleConfig}
-              position={captionPosition}
-              onPositionChange={setCaptionPosition}
-              aspectRatio={aspectRatio}
-              onAspectRatioChange={setAspectRatio}
-              wordsPerSegment={parsedWordsPerSegment}
-              fontFamily={selectedFont}
-              fontSizeScale={fontSizeScale}
-              textTransform={textTransform}
-              primaryColorOverride={customPrimaryColor || null}
-              highlightColorOverride={customHighlightColor || null}
-            />
           </div>
         </div>
       </div>
