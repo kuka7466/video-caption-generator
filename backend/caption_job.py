@@ -106,17 +106,24 @@ def transcribe_audio(
     model_size: str | None = None,
     language: str | None = None,
 ) -> dict:
-    """Transcribe *video_path* using faster-whisper with word-level timestamps."""
+    """Transcribe *video_path* using faster-whisper with word-level timestamps and high-accuracy beam search."""
     from transliterate import devanagari_to_hinglish
 
     model = get_whisper_model(model_size)
     
-    transcribe_kwargs = {"word_timestamps": True}
     is_hinglish = language and language.strip().lower() == "hinglish"
+    transcribe_kwargs = {
+        "word_timestamps": True,
+        "beam_size": 5,
+        "best_of": 5,
+        "condition_on_previous_text": False,
+        "vad_filter": True,
+        "vad_parameters": dict(min_silence_duration_ms=500),
+    }
 
     if is_hinglish:
-        transcribe_kwargs["language"] = "hi"
-        transcribe_kwargs["initial_prompt"] = "Kya haal hai? Aap kaise ho? Main theek hoon. Yeh Hinglish video captions hain."
+        # Prompt Whisper with conversational Hinglish and code-switching business context
+        transcribe_kwargs["initial_prompt"] = "Kya haal hai? Aap kaise ho? Main theek hoon. Kashif B2B wholesale orders manually, emails, spreadsheets, video captions."
     elif language and language.strip().lower() != "auto":
         transcribe_kwargs["language"] = language.strip().lower()
 

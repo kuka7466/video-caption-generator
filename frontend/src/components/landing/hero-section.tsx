@@ -57,10 +57,10 @@ const POPULAR_LANGUAGES = [
 ];
 
 const MODEL_OPTIONS = [
-  { size: "tiny", label: "Tiny (Fastest)" },
-  { size: "base", label: "Base (Balanced)" },
-  { size: "small", label: "Small (Higher Quality)" },
-  { size: "medium", label: "Medium (Most Accurate)" },
+  { size: "base", label: "Base (Fast & Balanced)" },
+  { size: "small", label: "Small (High Accuracy - Recommended for Hinglish)" },
+  { size: "medium", label: "Medium (Studio Precision - 98%+ Accuracy)" },
+  { size: "tiny", label: "Tiny (Ultra Fast - Low CPU)" },
 ];
 
 const FONT_OPTIONS = [
