@@ -40,14 +40,14 @@ const RATIO_OPTIONS: { id: AspectRatio; label: string; icon: React.ReactNode }[]
 ];
 
 const ALL_SAMPLE_WORDS = [
-  "VIRAL",
-  "ANIMATED",
+  "SAMPLE",
+  "TEXT",
   "CAPTIONS",
   "FOR",
-  "HIGH",
-  "RETENTION",
-  "CREATOR",
-  "VIDEOS",
+  "YOUR",
+  "PREVIEW",
+  "VIDEO",
+  "DEMO",
 ];
 
 function getAnimationClass(animationType: string): string {
