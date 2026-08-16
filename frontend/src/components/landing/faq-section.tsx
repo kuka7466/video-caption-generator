@@ -6,34 +6,34 @@ import { useIntersectionObserver } from "~/hooks/use-intersection-observer";
 
 const faqs = [
   {
-    question: "What video formats are supported?",
+    question: "Do you support 16:9 Desktop and Landscape videos?",
     answer:
-      "We support MP4, MOV, and WebM video files. Most videos from phones, cameras, and screen recorders work out of the box.",
+      "Yes! The app features full multi-aspect ratio support for 16:9 Desktop/Landscape (YouTube, presentations, TV), 9:16 Mobile (Shorts, Reels, TikTok), 1:1 Square, and 4:5 Feed. It automatically detects the ratio when you upload a video.",
   },
   {
-    question: "How long does processing take?",
+    question: "What motion animations and styles are available?",
     answer:
-      "It depends on video length and hardware. With faster-whisper on CPU or GPU, typical short videos process in seconds.",
+      "We offer 11 creator styles (Hormozi, MrBeast, Cyberpunk, Ali Abdaal, Cinematic, Spotlight, Retro Wave, Karaoke, Minimal, Bounce, Classic) plus motion graphics animations (Kinetic Stretch & Snap, Glitch RGB Aberration, Slide Reveal, Motion Blur, Spring Bounce, Scale Pop, Karaoke Sweeps, and Word Highlights).",
   },
   {
-    question: "What languages are supported?",
+    question: "Can I customize fonts, text outline, and brand colors?",
     answer:
-      "Over 100 languages are supported via automatic detection or manual selection. The AI transcription identifies the spoken language and selects appropriate fonts for each script.",
+      "Yes! You can choose from creator fonts (Montserrat, Bebas Neue, Anton, Bangers, Cinzel, Outfit, Inter, Poppins), toggle text outlines On/Off, customize outline thickness/color, scale font size from 75% to 150%, and set custom text & highlight brand colors.",
   },
   {
-    question: "Can I customize caption position?",
+    question: "Can I control how many words or lines appear on screen?",
     answer:
-      "Yes! Use our interactive phone mockup to drag captions anywhere from 5% to 50% from the bottom. Preset buttons for Top, Middle, and Bottom positions.",
+      "Yes! The Words Per Subtitle Block selector allows you to choose 1-word punchy hooks, 2–3 words standard timing, 4–6 words sentence flow, or 7–10 words extended reading, with Single Line (1) or Two Lines (2) layout limits.",
   },
   {
     question: "Can I download SRT or ASS subtitles separately?",
     answer:
-      "Yes! In addition to the captioned MP4 video, you can download the raw .srt and styled .ass subtitle files directly.",
+      "Yes! In addition to the fully burned MP4 video, you can download raw .srt subtitles for video editors (CapCut, Premiere, DaVinci Resolve) and styled .ass subtitle files directly.",
   },
   {
-    question: "How is this different from other caption tools?",
+    question: "Is this standalone and private?",
     answer:
-      "It's fully self-hosted and open-source. Your videos stay on your infrastructure. No accounts, no uploads to third parties, no usage limits, and no vendor lock-in.",
+      "Yes! It runs 100% locally on your machine with zero cloud uploads, zero telemetry, and zero accounts. It includes an automated 1-click launcher (start.bat) that sets up dependencies automatically.",
   },
 ];
 

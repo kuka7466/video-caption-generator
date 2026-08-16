@@ -9,32 +9,32 @@ const steps = [
     number: "1",
     title: "Upload Video",
     description:
-      "Drop any MP4, MOV, or WebM video. Up to 500MB and 30 minutes.",
+      "Drop any 16:9 Desktop, 9:16 Shorts, or Square MP4, MOV, or WebM video. Up to 500MB and 30 minutes with auto-ratio detection.",
     icon: Upload,
-    pills: ["MP4, MOV, WebM", "Up to 500MB", "Up to 30 min"],
+    pills: ["16:9 & 9:16", "MP4, MOV, WebM", "Auto-Ratio Detect"],
   },
   {
     number: "2",
-    title: "Pick a Style",
+    title: "Pick Style & Motion Animation",
     description:
-      "Choose from 6 trending caption styles. Preview the look in real-time with our interactive phone mockup.",
+      "Choose from 11 creator styles, Jitter motion animations (Kinetic Stretch, Glitch, Slide Reveal, Motion Blur), custom fonts, outline controls, and brand colors.",
     icon: Palette,
-    pills: ["6 styles", "Live preview", "Drag to position"],
+    pills: ["11 Styles", "Motion Animations", "Custom Fonts & Outlines"],
   },
   {
     number: "3",
-    title: "Download",
+    title: "Export in Full HD",
     description:
-      "Your captioned video and subtitles are ready. Download in full HD quality or export .srt / .ass.",
+      "Your captioned video and subtitles are rendered with 1:1 font parity. Download burned MP4 video or export standalone .srt / .ass subtitle files.",
     icon: Download,
-    pills: ["HD quality", "CRF 18", "SRT & ASS export"],
+    pills: ["Full HD MP4", "CRF 18 Quality", "SRT & ASS Export"],
   },
 ];
 
 const pipelineSteps = [
   { icon: Upload, label: "Upload" },
   { icon: Mic, label: "Transcribe" },
-  { icon: Palette, label: "Style" },
+  { icon: Palette, label: "Style & Animate" },
   { icon: Flame, label: "Burn" },
   { icon: Download, label: "Export" },
 ];
@@ -60,7 +60,7 @@ export function HowItWorksSection() {
             </span>
           </h2>
           <p className="mx-auto max-w-2xl text-center text-lg text-gray-600 dark:text-gray-400">
-            Three simple steps from raw video to captioned masterpiece.
+            Three simple steps from raw footage to animated video captions.
           </p>
         </div>
 

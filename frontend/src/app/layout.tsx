@@ -24,7 +24,7 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "AI Video Captions",
   description:
-    "Add trending animated captions to any video. 6 styles, word-level animation, multi-language support. Free and open-source.",
+    "Add animated video captions in 11 creator styles with motion graphics animations, desktop 16:9 and mobile 9:16 ratios, custom fonts, outline controls, and multi-format exports. 100% free and open-source.",
 };
 
 export default function RootLayout({

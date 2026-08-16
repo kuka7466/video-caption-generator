@@ -1,44 +1,51 @@
 "use client";
 
-import { Mic, Palette, Sparkles, Globe, Shield, Download } from "lucide-react";
+import {
+  Palette,
+  Sparkles,
+  Monitor,
+  Type,
+  Mic,
+  Download,
+} from "lucide-react";
 import { useIntersectionObserver } from "~/hooks/use-intersection-observer";
 
 const features = [
   {
-    icon: Mic,
-    title: "AI Transcription",
-    description:
-      "Powered by faster-whisper. Automatic speech-to-text with word-level timestamps for precise caption timing.",
-  },
-  {
     icon: Palette,
-    title: "6 Caption Styles",
+    title: "11 Creator Caption Styles",
     description:
-      "Hormozi, MrBeast, Karaoke, Minimal, Bounce, Classic. Trending styles from top creators.",
+      "Hormozi, MrBeast, Cyberpunk, Clean Pastel, Cinematic, Spotlight, Retro Wave, Karaoke, Minimal, Bounce, and Classic. Trending aesthetic styles inspired by top creators.",
   },
   {
     icon: Sparkles,
-    title: "Word-Level Animation",
+    title: "Motion Graphics Animations",
     description:
-      "Each word animates individually — highlights, karaoke wipes, bounces, and scale effects.",
+      "Jitter-inspired Kinetic Stretch & Snap, Glitch RGB Aberration, Apple-style Slide Reveal, Motion Blur In, Spring Bounce, Scale Pop, Karaoke sweeps, and Word Highlights.",
   },
   {
-    icon: Globe,
-    title: "Multi-Language",
+    icon: Monitor,
+    title: "Desktop 16:9 & Multi-Ratio",
     description:
-      "Automatically detects 100+ languages. Script-aware font selection for Latin, CJK, Cyrillic, Arabic, and more.",
+      "Full support for 16:9 Desktop/Landscape videos (YouTube, TV, podcasts), 9:16 Vertical Shorts/Reels, 1:1 Square, and 4:5 Feed with instant auto-detection.",
   },
   {
-    icon: Shield,
-    title: "Self-Hosted & Private",
+    icon: Type,
+    title: "Granular Typography & Outline",
     description:
-      "Run on your own infrastructure. No accounts, no tracking, no data collection.",
+      "Customize words per block (1 to 10), max lines (1 or 2), creator fonts (Montserrat, Bebas Neue, Anton, Bangers, Cinzel), text scaling, outline toggle on/off, and brand color pickers.",
+  },
+  {
+    icon: Mic,
+    title: "AI Word-Level Sync",
+    description:
+      "Powered by faster-whisper. Automatic speech-to-text with word-level timestamps, automatic CUDA GPU acceleration, and CPU fallback across 100+ languages.",
   },
   {
     icon: Download,
     title: "Multi-Format Export",
     description:
-      "Download captioned video in full HD (CRF 18) or export standalone .srt and .ass subtitles.",
+      "Burn subtitles directly into high-definition MP4 videos (CRF 18 quality) or export standalone .srt and styled .ass subtitle files for Premiere, CapCut, and DaVinci Resolve.",
   },
 ];
 
@@ -62,8 +69,7 @@ export function FeaturesSection() {
             </span>
           </h2>
           <p className="mx-auto mb-12 max-w-2xl text-center text-lg text-gray-600 dark:text-gray-400">
-            A complete toolkit for adding stunning animated captions to any
-            video.
+            A complete studio-grade toolkit for adding stunning animated captions to desktop and mobile videos.
           </p>
         </div>
 
