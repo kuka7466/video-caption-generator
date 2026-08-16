@@ -10,6 +10,10 @@
   <a href="https://github.com/kuka7466/video-caption-generator/issues"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome"></a>
 </p>
 
+<p align="center">
+  <img src="docs/assets/hero_preview.png" alt="AI Video Caption Generator - Live Preview and Customization Interface" width="100%" />
+</p>
+
 ---
 
 > [!NOTE]
