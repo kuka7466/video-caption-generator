@@ -149,10 +149,23 @@ class JobStorage:
 
     def active_job_count(self) -> int:
         with self._lock:
-            return sum(
-                1 for j in self._jobs.values()
-                if j["status"] in ("pending", "processing")
-            )
+            active = 0
+            now_dt = datetime.now(timezone.utc)
+            for j in self._jobs.values():
+                if j.get("status") in ("pending", "processing"):
+                    # Auto-expire jobs stuck for > 20 minutes
+                    updated_at_str = j.get("updated_at") or j.get("created_at")
+                    try:
+                        if updated_at_str:
+                            up_dt = datetime.fromisoformat(updated_at_str)
+                            if (now_dt - up_dt).total_seconds() > 1200:
+                                j["status"] = "failed"
+                                j["error_message"] = "Job timed out"
+                                continue
+                    except Exception:
+                        pass
+                    active += 1
+            return active
 
     def _persist(self) -> None:
         if not self._persist_path:
@@ -171,6 +184,12 @@ class JobStorage:
         try:
             with open(self._persist_path, "r", encoding="utf-8") as f:
                 self._jobs = json.load(f)
+            # Stale job protection: mark any interrupted pending/processing jobs as failed on startup
+            for j in self._jobs.values():
+                if j.get("status") in ("pending", "processing"):
+                    j["status"] = "failed"
+                    j["error_message"] = "Interrupted by server restart"
+            self._persist()
         except Exception:
             logger.exception("Failed to load job storage from %s", self._persist_path)
             self._jobs = {}

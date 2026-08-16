@@ -35,7 +35,7 @@ def create_app(testing: bool = False) -> Flask:
 
     max_content_length = int(os.environ.get("MAX_CONTENT_LENGTH", 500 * 1024 * 1024))
     data_dir = os.environ.get("DATA_DIR", os.path.join(os.path.dirname(__file__), "data"))
-    max_concurrent_jobs = int(os.environ.get("MAX_CONCURRENT_JOBS", 3))
+    max_concurrent_jobs = int(os.environ.get("MAX_CONCURRENT_JOBS", 10))
 
     app = Flask(__name__)
     app.config["TESTING"] = testing
@@ -302,6 +302,17 @@ def create_app(testing: bool = False) -> Flask:
                             os.rmdir(dir_path)
                         except Exception:
                             pass
+
+        # Clear any stale jobs in storage
+        try:
+            with storage._lock:
+                for j in storage._jobs.values():
+                    if j.get("status") in ("pending", "processing"):
+                        j["status"] = "failed"
+                        j["error_message"] = "Job cancelled during cache cleanup"
+                storage._persist()
+        except Exception:
+            pass
 
         freed_mb = round(freed_bytes / (1024 * 1024), 2)
         return jsonify({
