@@ -21,6 +21,7 @@ interface CaptionPreviewProps {
   outlineEnabled?: boolean;
   outlineColorOverride?: string | null;
   outlineSizeOverride?: number | null;
+  animationTypeOverride?: string | null;
 }
 
 const POSITION_PRESETS = [
@@ -38,6 +39,14 @@ const RATIO_OPTIONS: { id: AspectRatio; label: string; icon: React.ReactNode }[]
 
 function getAnimationClass(animationType: string): string {
   switch (animationType) {
+    case "stretch":
+      return "animate-caption-stretch";
+    case "glitch":
+      return "animate-caption-glitch";
+    case "slide":
+      return "animate-caption-slide";
+    case "blur":
+      return "animate-caption-blur";
     case "karaoke":
       return "animate-caption-karaoke";
     case "scale":
@@ -96,6 +105,7 @@ export function CaptionPreview({
   outlineEnabled = true,
   outlineColorOverride,
   outlineSizeOverride,
+  animationTypeOverride,
 }: CaptionPreviewProps) {
   const screenRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -106,7 +116,8 @@ export function CaptionPreview({
   const isSquare = activeRatio === "square";
   const isPortrait = activeRatio === "portrait";
 
-  const animationClass = getAnimationClass(style.animationType);
+  const effectiveAnim = animationTypeOverride && animationTypeOverride !== "default" ? animationTypeOverride : style.animationType;
+  const animationClass = getAnimationClass(effectiveAnim);
   const effectivePrimaryColor = primaryColorOverride || style.primaryColor;
   const effectiveHighlightColor = highlightColorOverride || style.highlightColor;
   const effectiveOutlineColor = outlineColorOverride || style.outlineColor;

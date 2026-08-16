@@ -66,6 +66,7 @@ export async function submitCaptionJob(
     const outlineEnabled = formData.get("outlineEnabled") as string | null;
     const outlineColor = formData.get("outlineColor") as string | null;
     const outlineSize = formData.get("outlineSize") as string | null;
+    const animationType = formData.get("animationType") as string | null;
 
     if (!file) {
       return { error: "No file provided" };
@@ -119,6 +120,9 @@ export async function submitCaptionJob(
     }
     if (outlineSize && outlineSize !== "default") {
       backendFormData.append("outlineSize", outlineSize);
+    }
+    if (animationType && animationType !== "default") {
+      backendFormData.append("animationType", animationType);
     }
 
     const response = await fetch(`${env.BACKEND_URL}/api/process`, {

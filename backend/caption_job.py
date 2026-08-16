@@ -171,6 +171,7 @@ def generate_ass_from_transcript(
     outline_enabled: bool = True,
     outline_color: str | None = None,
     outline_size: float | None = None,
+    animation_type: str | None = None,
 ) -> bool:
     """Generate an ASS subtitle file from a transcript dict."""
     import subtitles
@@ -195,6 +196,7 @@ def generate_ass_from_transcript(
         outline_enabled=outline_enabled,
         outline_color=outline_color,
         outline_size=outline_size,
+        animation_type=animation_type,
     )
 
 
@@ -247,6 +249,7 @@ def process_caption_job(
     outline_enabled: bool = True,
     outline_color: str | None = None,
     outline_size: float | None = None,
+    animation_type: str | None = None,
 ) -> None:
     """Run the full captioning pipeline for a job."""
     temp_job_dir = os.path.join(data_dir, "temp", job_id)

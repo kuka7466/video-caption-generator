@@ -333,3 +333,52 @@
 .animate-scan-line {
   animation: scanLine 2.5s linear infinite;
 }
+
+/* Jitter-inspired subtitle motion keyframes */
+@keyframes captionStretch {
+  0%, 100% { transform: scale(1, 1); }
+  35% { transform: scale(1.24, 0.82); }
+  65% { transform: scale(0.96, 1.06); }
+  85% { transform: scale(1.02, 0.98); }
+}
+
+@keyframes captionGlitch {
+  0%, 100% { transform: translate(0); filter: drop-shadow(0 0 0 transparent); }
+  15% { transform: translate(-3px, 1.5px); filter: drop-shadow(2px 0 #00F0FF) drop-shadow(-2px 0 #FF007F); }
+  30% { transform: translate(3px, -1.5px); filter: drop-shadow(-2px 0 #00F0FF) drop-shadow(2px 0 #FF007F); }
+  45% { transform: translate(-1px, 1px); }
+  60% { transform: translate(0); filter: drop-shadow(0 0 0 transparent); }
+}
+
+@keyframes captionSlide {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  15% { transform: translateY(7px); opacity: 0.4; }
+  45% { transform: translateY(-3px); opacity: 1; }
+  75% { transform: translateY(0); }
+}
+
+@keyframes captionBlur {
+  0%, 100% { filter: blur(0px); transform: scale(1); }
+  25% { filter: blur(3.5px); transform: scale(1.12); }
+  55% { filter: blur(0px); transform: scale(1); }
+}
+
+.animate-caption-stretch {
+  display: inline-block;
+  animation: captionStretch 1.8s ease-in-out infinite;
+}
+
+.animate-caption-glitch {
+  display: inline-block;
+  animation: captionGlitch 2s ease-in-out infinite;
+}
+
+.animate-caption-slide {
+  display: inline-block;
+  animation: captionSlide 1.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.animate-caption-blur {
+  display: inline-block;
+  animation: captionBlur 1.8s ease-out infinite;
+}

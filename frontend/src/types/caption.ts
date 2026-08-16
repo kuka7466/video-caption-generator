@@ -11,7 +11,7 @@ export type CaptionStyle =
   | "spotlight"
   | "retrowave";
 
-export type AnimationType = "highlight" | "karaoke" | "scale" | "bounce";
+export type AnimationType = "highlight" | "karaoke" | "scale" | "bounce" | "stretch" | "glitch" | "slide" | "blur";
 
 export type AspectRatio = "auto" | "landscape" | "vertical" | "square" | "portrait";
 

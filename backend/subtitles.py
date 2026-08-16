@@ -51,6 +51,7 @@ def generate_ass(
     outline_enabled: bool = True,
     outline_color: str | None = None,
     outline_size: float | None = None,
+    animation_type: str | None = None,
 ) -> bool:
     """Generate an ASS subtitle file with styled word-by-word animations.
 
@@ -290,7 +291,7 @@ def generate_ass(
     else:
         highlight_color = style_config.highlight_color
 
-    animation_type = style_config.animation_type
+    effective_anim = animation_type if animation_type and animation_type != "default" else style_config.animation_type
 
     # Generate subtitle events with word animations
     for _, line_end, word_list in subtitles:
@@ -314,15 +315,38 @@ def generate_ass(
                     # Current active word
                     word_color = highlight_color
 
-                    if animation_type == "karaoke":
+                    if effective_anim == "karaoke":
                         if is_rtl_language(language):
                             text_parts.append(f"{{\\c{word_color}}}{w_escaped}{{\\r}}")
                         else:
                             duration_cs = int((w_end - w_start) * 100) if w_end > w_start else 30
                             text_parts.append(f"{{\\kf{duration_cs}\\c{word_color}}}{w_escaped}{{\\r}}")
-                    elif animation_type == "scale":
-                        text_parts.append(f"{{\\fscx112\\fscy112\\c{word_color}}}{w_escaped}{{\\r}}")
-                    elif animation_type == "bounce":
+                    elif effective_anim == "stretch":
+                        text_parts.append(
+                            f"{{\\t(0,60,\\fscx126\\fscy82)"
+                            f"\\t(60,130,\\fscx100\\fscy100)"
+                            f"\\c{word_color}}}{w_escaped}{{\\r}}"
+                        )
+                    elif effective_anim == "glitch":
+                        text_parts.append(
+                            f"{{\\c&H00F0FF&\\3c&HFF007F&"
+                            f"\\t(0,40,\\c&HFF007F&\\3c&H00F0FF&)"
+                            f"\\t(40,100,\\c{word_color})}}{w_escaped}{{\\r}}"
+                        )
+                    elif effective_anim == "slide":
+                        text_parts.append(
+                            f"{{\\t(0,50,\\frz-4\\fscy110)"
+                            f"\\t(50,110,\\frz0\\fscy100)"
+                            f"\\c{word_color}}}{w_escaped}{{\\r}}"
+                        )
+                    elif effective_anim == "blur":
+                        text_parts.append(
+                            f"{{\\blur5\\t(0,60,\\blur0)"
+                            f"\\c{word_color}}}{w_escaped}{{\\r}}"
+                        )
+                    elif effective_anim == "scale":
+                        text_parts.append(f"{{\\fscx114\\fscy114\\c{word_color}}}{w_escaped}{{\\r}}")
+                    elif effective_anim == "bounce":
                         bounce_pct = 120 if font_scale >= 1.0 else 112
                         text_parts.append(
                             f"{{\\t(0,50,\\fscx{bounce_pct}\\fscy{bounce_pct})"

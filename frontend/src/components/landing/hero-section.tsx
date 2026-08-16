@@ -98,6 +98,18 @@ const OUTLINE_SIZE_OPTIONS = [
   { value: "12", label: "Heavy (12px)" },
 ];
 
+const ANIMATION_OPTIONS = [
+  { value: "default", label: "Style Default" },
+  { value: "stretch", label: "Kinetic Stretch & Snap (Jitter)" },
+  { value: "glitch", label: "Glitch RGB Aberration (Jitter)" },
+  { value: "slide", label: "Smooth Slide Reveal (Apple Keynote)" },
+  { value: "blur", label: "Motion Blur Focus (Jitter)" },
+  { value: "bounce", label: "Spring Bounce (Jitter)" },
+  { value: "scale", label: "Scale Pop" },
+  { value: "highlight", label: "Word Highlight" },
+  { value: "karaoke", label: "Karaoke Color Fill" },
+];
+
 const TEXT_CASE_OPTIONS = [
   { value: "uppercase", label: "UPPERCASE (ALL CAPS)" },
   { value: "titlecase", label: "Title Case" },
@@ -134,6 +146,7 @@ export function HeroSection() {
   const [outlineEnabled, setOutlineEnabled] = useState<boolean>(true);
   const [customOutlineColor, setCustomOutlineColor] = useState<string>("");
   const [outlineSize, setOutlineSize] = useState<string>("default");
+  const [selectedAnimation, setSelectedAnimation] = useState<string>("default");
 
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
@@ -207,6 +220,9 @@ export function HeroSection() {
     }
     if (outlineSize !== "default") {
       formData.append("outlineSize", outlineSize);
+    }
+    if (selectedAnimation !== "default") {
+      formData.append("animationType", selectedAnimation);
     }
 
     const progressInterval = setInterval(() => {
@@ -553,8 +569,27 @@ export function HeroSection() {
                           </div>
                         </div>
 
-                        {/* Text Case + Custom Colors */}
+                        {/* Motion Animation & Text Case */}
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <div>
+                            <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                              <Sparkles className="h-3.5 w-3.5 text-[#459F94]" />
+                              Motion Graphics Animation
+                            </label>
+                            <select
+                              value={selectedAnimation}
+                              onChange={(e) => setSelectedAnimation(e.target.value)}
+                              disabled={isUploading}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-[#459F94] focus:outline-none"
+                            >
+                              {ANIMATION_OPTIONS.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
                           <div>
                             <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                               <CaseSensitive className="h-3.5 w-3.5 text-[#459F94]" />
@@ -573,31 +608,32 @@ export function HeroSection() {
                               ))}
                             </select>
                           </div>
+                        </div>
 
-                          <div>
-                            <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                              <Pipette className="h-3.5 w-3.5 text-[#459F94]" />
-                              Custom Text &amp; Highlight Colors
-                            </label>
-                            <div className="flex items-center gap-3">
-                              <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-background px-2.5 py-1.5">
-                                <input
-                                  type="color"
-                                  value={customPrimaryColor || styleConfig.primaryColor}
-                                  onChange={(e) => setCustomPrimaryColor(e.target.value)}
-                                  className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent"
-                                />
-                                <span className="text-xs text-muted-foreground">Text</span>
-                              </div>
-                              <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-background px-2.5 py-1.5">
-                                <input
-                                  type="color"
-                                  value={customHighlightColor || styleConfig.highlightColor}
-                                  onChange={(e) => setCustomHighlightColor(e.target.value)}
-                                  className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent"
-                                />
-                                <span className="text-xs text-muted-foreground">Highlight</span>
-                              </div>
+                        {/* Custom Brand Colors */}
+                        <div>
+                          <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            <Pipette className="h-3.5 w-3.5 text-[#459F94]" />
+                            Custom Brand Text &amp; Highlight Colors
+                          </label>
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
+                              <input
+                                type="color"
+                                value={customPrimaryColor || styleConfig.primaryColor}
+                                onChange={(e) => setCustomPrimaryColor(e.target.value)}
+                                className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent"
+                              />
+                              <span className="text-xs text-muted-foreground">Main Text Color: {customPrimaryColor || styleConfig.primaryColor}</span>
+                            </div>
+                            <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
+                              <input
+                                type="color"
+                                value={customHighlightColor || styleConfig.highlightColor}
+                                onChange={(e) => setCustomHighlightColor(e.target.value)}
+                                className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent"
+                              />
+                              <span className="text-xs text-muted-foreground">Active Highlight Color: {customHighlightColor || styleConfig.highlightColor}</span>
                             </div>
                           </div>
                         </div>
@@ -670,6 +706,7 @@ export function HeroSection() {
                 outlineEnabled={outlineEnabled}
                 outlineColorOverride={customOutlineColor || null}
                 outlineSizeOverride={parsedOutlineSize}
+                animationTypeOverride={selectedAnimation}
               />
             </div>
           </div>
