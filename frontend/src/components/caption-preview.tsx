@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Monitor, Smartphone, Square, Smartphone as PhonePortrait } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { CAPTION_POSITION_MIN, CAPTION_POSITION_MAX } from "~/lib/caption-styles";
@@ -22,6 +22,7 @@ interface CaptionPreviewProps {
   outlineColorOverride?: string | null;
   outlineSizeOverride?: number | null;
   animationTypeOverride?: string | null;
+  videoFile?: File | null;
 }
 
 const POSITION_PRESETS = [
@@ -106,10 +107,24 @@ export function CaptionPreview({
   outlineColorOverride,
   outlineSizeOverride,
   animationTypeOverride,
+  videoFile,
 }: CaptionPreviewProps) {
   const screenRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const isDraggingRef = useRef(false);
+
+  const videoUrl = useMemo(() => {
+    if (!videoFile) return null;
+    return URL.createObjectURL(videoFile);
+  }, [videoFile]);
+
+  useEffect(() => {
+    return () => {
+      if (videoUrl) {
+        URL.revokeObjectURL(videoUrl);
+      }
+    };
+  }, [videoUrl]);
 
   const activeRatio = aspectRatio === "auto" ? "landscape" : aspectRatio;
   const isLandscape = activeRatio === "landscape";
@@ -252,10 +267,30 @@ export function CaptionPreview({
         >
           <div
             ref={screenRef}
-            className="relative h-full w-full"
+            className="relative h-full w-full overflow-hidden"
           >
-            {/* Background Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-950 to-black" />
+            {/* Blurred Background Image / Video */}
+            {videoUrl ? (
+              <video
+                src={videoUrl}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="absolute inset-0 h-full w-full object-cover filter blur-[2px] opacity-75 scale-105"
+              />
+            ) : (
+              <div className="absolute inset-0 overflow-hidden">
+                {/* Cinematic Ambient Blurred Background Scene */}
+                <div className="absolute -inset-4 bg-gradient-to-br from-indigo-900/60 via-purple-950/80 to-slate-950 filter blur-sm scale-110" />
+                <div className="absolute top-1/4 left-1/3 h-28 w-28 rounded-full bg-[#459F94]/30 filter blur-xl animate-pulse" />
+                <div className="absolute bottom-1/3 right-1/4 h-32 w-32 rounded-full bg-[#EDB118]/25 filter blur-xl" />
+                <div className="absolute inset-0 bg-radial from-transparent via-black/40 to-black/80" />
+              </div>
+            )}
+
+            {/* Dark Vignette Overlay for Readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
 
             {/* Draggable Caption Overlay */}
             <div
@@ -303,7 +338,7 @@ export function CaptionPreview({
             {/* Drag hint */}
             {!isDragging && (
               <div
-                className="absolute inset-x-0 text-center text-[9px] text-gray-500"
+                className="absolute inset-x-0 text-center text-[9px] font-medium text-white/70 drop-shadow-md"
                 style={{ bottom: `calc(${position}% - 18px)` }}
               >
                 Drag to reposition
@@ -312,7 +347,7 @@ export function CaptionPreview({
 
             {/* Home indicator for mobile */}
             {!isLandscape && (
-              <div className="absolute bottom-1.5 left-1/2 h-1 w-24 -translate-x-1/2 rounded-full bg-gray-600" />
+              <div className="absolute bottom-1.5 left-1/2 h-1 w-24 -translate-x-1/2 rounded-full bg-white/40" />
             )}
           </div>
         </div>

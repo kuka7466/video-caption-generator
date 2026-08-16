@@ -707,6 +707,7 @@ export function HeroSection() {
                 outlineColorOverride={customOutlineColor || null}
                 outlineSizeOverride={parsedOutlineSize}
                 animationTypeOverride={selectedAnimation}
+                videoFile={file}
               />
             </div>
           </div>
