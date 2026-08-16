@@ -41,13 +41,14 @@ const trustIndicators = [
 
 const POPULAR_LANGUAGES = [
   { code: "auto", label: "Auto Detect" },
+  { code: "hinglish", label: "Hinglish (Hindi in English Script)" },
+  { code: "hi", label: "Hindi (हिन्दी)" },
   { code: "en", label: "English" },
   { code: "es", label: "Spanish" },
   { code: "fr", label: "French" },
   { code: "de", label: "German" },
   { code: "pt", label: "Portuguese" },
   { code: "it", label: "Italian" },
-  { code: "hi", label: "Hindi" },
   { code: "ja", label: "Japanese" },
   { code: "zh", label: "Chinese" },
   { code: "ko", label: "Korean" },

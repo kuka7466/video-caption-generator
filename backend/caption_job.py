@@ -107,10 +107,17 @@ def transcribe_audio(
     language: str | None = None,
 ) -> dict:
     """Transcribe *video_path* using faster-whisper with word-level timestamps."""
+    from transliterate import devanagari_to_hinglish
+
     model = get_whisper_model(model_size)
     
     transcribe_kwargs = {"word_timestamps": True}
-    if language and language.strip().lower() != "auto":
+    is_hinglish = language and language.strip().lower() == "hinglish"
+
+    if is_hinglish:
+        transcribe_kwargs["language"] = "hi"
+        transcribe_kwargs["initial_prompt"] = "Kya haal hai? Aap kaise ho? Main theek hoon. Yeh Hinglish video captions hain."
+    elif language and language.strip().lower() != "auto":
         transcribe_kwargs["language"] = language.strip().lower()
 
     try:
@@ -119,11 +126,13 @@ def transcribe_audio(
         for seg in segments_iter:
             words = []
             for w in (seg.words or []):
-                words.append({"word": w.word, "start": w.start, "end": w.end})
+                w_text = devanagari_to_hinglish(w.word) if is_hinglish else w.word
+                words.append({"word": w_text, "start": w.start, "end": w.end})
+            seg_text = devanagari_to_hinglish(seg.text.strip()) if is_hinglish else seg.text.strip()
             segments.append({
                 "start": seg.start,
                 "end": seg.end,
-                "text": seg.text.strip(),
+                "text": seg_text,
                 "words": words,
             })
     except RuntimeError as exc:
